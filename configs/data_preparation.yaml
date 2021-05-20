@@ -1,0 +1,5 @@
+paper_data_folder: 'paper_data'
+raw_data_folder: 'raw_data'
+data_folder: 'data'
+conf_list: ['AAAI18', 'AAAI19', 'AAAI20', 'CVPR13', 'CVPR14', 'CVPR15', 'CVPR16', 'CVPR17', 'CVPR18', 'CVPR19', 'CVPR20', 'ICCV13', 'ICCV15', 'ICCV17', 'ICCV19', 'ECCV18', 'ICML13', 'ICML14', 'ICML15', 'ICML16', 'ICML17', 'ICML18', 'ICML19', 'ICML20', 'NIPS13', 'NIPS14', 'NIPS15', 'NIPS16', 'NIPS17', 'NIPS18', 'NIPS19', 'NIPS20']
+science_parse_jar_path: '~/Desktop/GalaxiesWork/science-parse/cli/target/scala-2.12/science-parse-cli-assembly-3.0.1.jar'
