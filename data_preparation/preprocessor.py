@@ -26,6 +26,10 @@ if 'data_folder' not in cfg_dict.keys():
     raise AttributeError('The data folder is left unspecified in configuration file.')
 data_folder = cfg_dict['data_folder']
 
+if 'data_name' not in cfg_dict.keys():
+    raise AttributeError('The data name is left unspecified in configuration file.')
+data_name = cfg_dict['data_name']
+
 
 def conf_to_venue_year_simple(conf_name):
     venue = conf_name[:4]
@@ -104,7 +108,7 @@ def format_str(s):
     return s.replace('\0', '').replace('\n', '').replace('\r', '').replace('\t', '')
 
 
-def process_raw_citation(input_dir, conf_list, output_dir):
+def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
     if os.path.exists(input_dir) == False:
         raise AttributeError('Invalid input directory!')
     
@@ -233,7 +237,7 @@ def process_raw_citation(input_dir, conf_list, output_dir):
         'paper_cnt': paper_ID_cnt - 1,
     }
 
-    with open(os.path.join(output_dir, 'citation.json'), 'w') as f:
+    with open(os.path.join(output_dir, dataset_name + '.json'), 'w') as f:
         json.dump(full_citation_dict, f)
     
     column_name = [
@@ -242,11 +246,11 @@ def process_raw_citation(input_dir, conf_list, output_dir):
     ]
     df = pd.DataFrame(pd_citation_list, columns = column_name)
     df.index.name = 'index'
-    df.to_csv('data/citation.csv')
+    df.to_csv(os.path.join(output_dir, dataset_name + '.csv'))
     print('*** Summary Statistics ***')
     print('# of papers: {}'.format(paper_ID_cnt - 1))
     print('# of reference items：{}'.format(df.shape[0]))
 
 
 if __name__ == '__main__':
-    process_raw_citation(raw_data_folder, conf_list, data_folder)
+    process_raw_citation(raw_data_folder, conf_list, data_folder, data_name)
