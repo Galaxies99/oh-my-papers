@@ -3,8 +3,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 from tqdm import tqdm
+import logging
+from utils.logger import ColoredLogger
 from .bert import Bert, Specter
 from .vgae import VariantionalGraphAutoEncoder
+
+
+logging.setLoggerClass(ColoredLogger)
+logger = logging.getLogger(__name__)
 
 
 class SimpleBert(nn.Module):
@@ -76,7 +82,7 @@ class SpecterVGAE(nn.Module):
         specter_dim = 768
         self.vgae = VariantionalGraphAutoEncoder(specter_dim, embedding_dim)
     
-    def process_paper_feature(self, papers, use_saved_results, filepath, device, process_batch_size = 16):
+    def process_paper_feature(self, papers, use_saved_results, filepath, specter_device = 'cpu', device = 'cpu', process_batch_size = 16):
         '''
         Process the paper features using Specter or previous inference results.
 
@@ -84,33 +90,36 @@ class SpecterVGAE(nn.Module):
         ----------
         papers: list of dict, including the title and abstract of each paper;
         use_saved_results: bool, whether to use the saved result;
-        filepath: str, the filepath of the result file.
-        device: str, the device on which the model is located in;
+        filepath: str, the filepath of the result file;
+        specter_device: str, optional, default: 'cpu', the device on which the specter model is located in;
+        device: str, optional, default: 'cpu', the device on which the model is located in;
         process_batch_size: int, optional, default: 16, the batch size of the Specter inference process.
         '''
-        self.specter.to(device)
+        self.specter.to(specter_device)
         if type(use_saved_results) is not bool:
             raise TypeError('The type of attribute use_saved_results should be bool.')
         if use_saved_results is False:
-            print('[Log] Processing Paper Features using Specter ...')
+            logger.info('Processing Paper Features using Specter ...')
             self.paper_features = None
             for i in tqdm(range(0, len(papers), process_batch_size)):
-                feature = self.specter(papers[i: min(i + process_batch_size, len(papers))])
+                tokens = self.specter.convert_tokens(papers[i: min(i + process_batch_size, len(papers))]).to(specter_device)
+                feature = self.specter(tokens)
                 if self.paper_features is None:
                     self.paper_features = feature
                 else:
                     self.paper_features = torch.cat([self.paper_features, feature], dim = 0)
-            print('[Log] Saving Paper Features into {}'.format(filepath))
-            sav_res = self.paper_features.detach().numpy()
+            logger.info('Saving Paper Features into {} ...'.format(filepath))
+            sav_res = self.paper_features.cpu().detach().numpy()
             np.save(filepath, sav_res)
-            print('[Log] File saved, next time you can set use_saved_results=True to read the features.')
+            logger.info('File saved, next time you can set use_saved_results=True to read the features.')
+            self.paper_features = torch.from_numpy(sav_res)
         else:
-            print('[Log] Reading saved paper features from {}'.format(filepath))
+            logger.info('Reading saved paper features from {} ...'.format(filepath))
             sav_res = np.load(filepath)
             if sav_res.shape[0] != len(papers):
                 raise AttributeError('The length of the saving results is incompatible with the number of given papers.')
             self.paper_features = torch.from_numpy(sav_res)
-            print('[Log] File read successfully.')
+            logger.info('File read successfully.')
         self.paper_features = self.paper_features.to(device)
 
     def forward(self, edge_index):

@@ -28,8 +28,10 @@ class Bert(nn.Module):
         else:
             self.linear = nn.Linear(bert_hidden, feature_dim)
 
-    def forward(self, context):
-        tokens = self.tokenizer(context, return_tensors = 'pt')
+    def convert_tokens(self, context):
+        return self.tokenizer(context, return_tensors = 'pt')
+
+    def forward(self, tokens):
         res = self.bert_model(**tokens).last_hidden_state[:, self.seq_dim, :]
         return self.linear(res) if self.linear is not None else res
 
@@ -45,8 +47,10 @@ class Specter(nn.Module):
         self.tokenizer = AutoTokenizer.from_pretrained("allenai/specter")
         self.specter = AutoModel.from_pretrained("allenai/specter")
     
-    def forward(self, papers):
+    def convert_tokens(self, papers):
         title_abs = [(paper.get('title', '') + self.tokenizer.sep_token + paper.get('abstract', '')) for paper in papers]
-        inputs = self.tokenizer(title_abs, padding = True, truncation = True, return_tensors = "pt", max_length = 512)
-        res = self.specter(**inputs).last_hidden_state[:, 0, :]
+        return self.tokenizer(title_abs, padding = True, truncation = True, return_tensors = "pt", max_length = 512)
+    
+    def forward(self, tokens):
+        res = self.specter(**tokens).last_hidden_state[:, 0, :]
         return res

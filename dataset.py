@@ -78,4 +78,4 @@ def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
             if src != tar and [src, tar] not in edge_list and [tar, src] not in edge_list:
                 test_neg_edge_list.append([src, tar])
                 valid_sample = True    
-    return train_edge_list, test_pos_edge_list, test_neg_edge_list, node_info
+    return edge_list, train_edge_list, test_pos_edge_list, test_neg_edge_list, node_info
