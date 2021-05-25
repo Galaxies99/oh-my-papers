@@ -4,6 +4,16 @@ import pandas as pd
 from sklearn import preprocessing
 
 def split_process_dataset(file_path, seq_len, year, frequency=5):
+    '''
+    Preprocess input data and split it into train_df and test_df
+
+    Parameters
+    ----------
+    file_path: path of the whole data
+    seq_len: maximal length of the citation context
+    year: year of boundary (training and test)
+    frequency: only articles that are referenced more than 'frequency' are retained
+    '''
     raw_data = pd.read_csv(file_path, index_col=False, dtype='object', engine='python')
 
     raw_data.rename(columns={
@@ -31,6 +41,18 @@ def split_process_dataset(file_path, seq_len, year, frequency=5):
     return train_df, test_df
 
 def construct_graph(df):
+    '''
+    Construct the graph based on the input dataframe
+
+    Parameters
+    ----------
+    df: input dataframe
+
+    Returns
+    -------
+    edge_lists (list) : the list of edges (size: n * 2)
+    node_info (list of dict): contains every paper's title and abstract
+    '''
     source_ids = df['SourceID'].values.tolist()
     target_ids = df['TargetID'].values.tolist()
     ids = list(set(list(source_ids + target_ids)))
@@ -52,6 +74,15 @@ def construct_graph(df):
     return edge_lists, node_info
 
 def _convert_df_type(df, columns, type):
+    '''
+    Convert the type of given columns
+
+    Parameters
+    ----------
+    df: input dataframe
+    columns: columns to be processed
+    type: the type wanted to transform into
+    '''
     if not isinstance(columns, list):
         columns = [columns]
     for column in columns:
@@ -60,6 +91,16 @@ def _convert_df_type(df, columns, type):
     return df
 
 def _cut_off_dataset(df, year, frequency=5):
+    '''
+    Remove items with (src_year > year or (src_year == year and tar_year == year)),
+    remove items whose citations < frequency
+
+    Parameters
+    ----------
+    df: input dataframe
+    year: the year threshold to use
+    frequency: the citation threshold
+    '''
     # remove items with source_year > year
     idx_1 = set(df['source_year'][df['source_year'] < year].index)
     idx_2 = set(df['source_year'][df['source_year'] == year].index) & set(df['target_year'][df['target_year'] < year].index)
@@ -74,14 +115,29 @@ def _cut_off_dataset(df, year, frequency=5):
     return df
 
 def _slicing_citation_text(df, number):
-    # slicing citaiton context
+    '''
+    Slicing the citation context to meet the length constraints
+
+    Parameters
+    ----------
+    df: input dataframe
+    number: maximal length of citation context
+    '''
     df['LeftString'] = df['left_citated_text'].str[-number:]
     df['RightString'] = df['right_citated_text'].str[:number]
 
     return df
 
 def _split_dataset(df, year):
+    '''
+    Split dataset and renumber the ids
 
+    Parameters
+    ----------
+    df: input dataframe
+    year: the year threshold
+    '''
+    # get the splited indices
     train_idx = df['source_year'][df['source_year'] < year].index
     test_idx = df['source_year'][df['source_year'] == year].index
 
@@ -117,8 +173,5 @@ if __name__ == "__main__":
 
     # construct graph
     edge_list, node_info = construct_graph(train_df)
-
-    # construct dataset for bert
-
 
 
