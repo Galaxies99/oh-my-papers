@@ -1,1 +1,9 @@
-scholarly
+torch
+numpy
+pandas
+tqdm
+yaml
+scipy
+argparse
+transformers
+torch-geometric
