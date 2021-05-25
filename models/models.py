@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import numpy as np
+from tqdm import tqdm
 from .bert import Bert, Specter
 from .vgae import VariantionalGraphAutoEncoder
 
@@ -61,24 +63,67 @@ class SpecterVGAE(nn.Module):
     '''
     Variantional Graph Auto-encoder with Specter features.
     '''
-    def __init__(self, feature_dim, embedding_dim):
+    def __init__(self, embedding_dim):
         '''
         Initialize citation-awared Bert model for context-based citation recommendation.
 
         Parameters
         ----------
-        feature_dim: int, the dimensions of features;
         embedding_dim: int, the dimensions of embeddings.
         '''
+        super(SpecterVGAE, self).__init__()
         self.specter = Specter()
         specter_dim = 768
-        self.linear = nn.Linear(specter_dim, feature_dim)
-        self.vgae = VariantionalGraphAutoEncoder(feature_dim, embedding_dim)
-
-    def forward(self, papers, edge_index):
-        paper_features = self.linear(self.specter(papers))
-        return self.vgae(paper_features, edge_index)
+        self.vgae = VariantionalGraphAutoEncoder(specter_dim, embedding_dim)
     
-    def encode(self, papers):
-        paper_features = self.linear(self.specter(papers))
-        return self.vgae.encode(paper_features)    
+    def process_paper_feature(self, papers, use_saved_results, filepath, device, process_batch_size = 16):
+        '''
+        Process the paper features using Specter or previous inference results.
+
+        Parameters
+        ----------
+        papers: list of dict, including the title and abstract of each paper;
+        use_saved_results: bool, whether to use the saved result;
+        filepath: str, the filepath of the result file.
+        device: str, the device on which the model is located in;
+        process_batch_size: int, optional, default: 16, the batch size of the Specter inference process.
+        '''
+        self.specter.to(device)
+        if type(use_saved_results) is not bool:
+            raise TypeError('The type of attribute use_saved_results should be bool.')
+        if use_saved_results is False:
+            print('[Log] Processing Paper Features using Specter ...')
+            self.paper_features = None
+            for i in tqdm(range(0, len(papers), process_batch_size)):
+                feature = self.specter(papers[i: min(i + process_batch_size, len(papers))])
+                if self.paper_features is None:
+                    self.paper_features = feature
+                else:
+                    self.paper_features = torch.cat([self.paper_features, feature], dim = 0)
+            print('[Log] Saving Paper Features into {}'.format(filepath))
+            sav_res = self.paper_features.detach().numpy()
+            np.save(filepath, sav_res)
+            print('[Log] File saved, next time you can set use_saved_results=True to read the features.')
+        else:
+            print('[Log] Reading saved paper features from {}'.format(filepath))
+            sav_res = np.load(filepath)
+            if sav_res.shape[0] != len(papers):
+                raise AttributeError('The length of the saving results is incompatible with the number of given papers.')
+            self.paper_features = torch.from_numpy(sav_res)
+            print('[Log] File read successfully.')
+        self.paper_features = self.paper_features.to(device)
+
+    def forward(self, edge_index):
+        return self.vgae(self.paper_features, edge_index)
+    
+    def encode(self, edge_index):
+        return self.vgae.encode(self.paper_features, edge_index)
+
+    def test(self, z, pos_edge_index, neg_edge_index):
+        return self.vgae.test(z, pos_edge_index, neg_edge_index)
+
+    def recon_loss(self, z, edge_index):
+        return self.vgae.recon_loss(z, edge_index)
+
+    def kl_loss(self):
+        return self.vgae.kl_loss()

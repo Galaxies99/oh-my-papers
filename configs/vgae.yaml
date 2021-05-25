@@ -1,0 +1,7 @@
+max_epoch: 500
+multigpu: False
+adam_beta1: 0.9
+adam_beta2: 0.999
+learning_rate: 0.01
+checkpoint_dir: 'checkpoint/vgae'
+data_path: 'data/citation.csv'

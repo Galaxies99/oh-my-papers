@@ -167,11 +167,3 @@ def _split_dataset(df, year):
     test_df = df.loc[test_idx]
 
     return train_df, test_df
-
-if __name__ == "__main__":
-    train_df, test_df = split_process_dataset(file_path='../data/citation.csv', seq_len=50, year=2015, frequency=5)
-
-    # construct graph
-    edge_list, node_info = construct_graph(train_df)
-
-
