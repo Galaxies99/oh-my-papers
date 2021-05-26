@@ -34,6 +34,7 @@ MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
 FREQUENCY = cfg_dict.get('frequency', 5)
+RECALL_K = cfg_dict.get('recall_K', [5, 10, 30, 50, 80])
 STATS_DIR = cfg_dict.get('stats_dir', os.path.join('stats', 'bert'))
 DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))
 if os.path.exists(STATS_DIR) == False:
@@ -63,19 +64,19 @@ criterion = CrossEntropyLoss()
 # Read checkpoints
 start_epoch = 0
 if os.path.isfile(checkpoint_file):
-    logging.info('Load checkpoint from {} ...'.format(checkpoint_file))
+    logger.info('Load checkpoint from {} ...'.format(checkpoint_file))
     checkpoint = torch.load(checkpoint_file, map_location = device)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     start_epoch = checkpoint['epoch']
-    logging.info('Checkpoint {} (epoch {}) loaded.'.format(checkpoint_file, start_epoch))
+    logger.info('Checkpoint {} (epoch {}) loaded.'.format(checkpoint_file, start_epoch))
 
 
 if MULTIGPU is True:
     model = torch.nn.DataParallel(model)
 
 # Result Recorder
-recorder = ResultRecorder(node_num)
+recorder = ResultRecorder(node_num, recall_K = RECALL_K)
 
 
 def train_one_epoch(epoch):
@@ -87,7 +88,7 @@ def train_one_epoch(epoch):
         left_context, right_context, label, _ = data
         tokens = model.convert_tokens(list(left_context), list(right_context)).to(device)
         label = torch.LongTensor(label).to(device)
-        res = model(tokens)
+        res, res_softmax = model(tokens)
         loss = criterion(res, label)
         loss.backward()
         optimizer.step()
@@ -105,13 +106,18 @@ def val_one_epoch(epoch):
         tokens = model.convert_tokens(list(left_context), list(right_context)).to(device)
         label = torch.LongTensor(label).to(device)
         with torch.no_grad():
-            res = model(tokens)
+            res, res_softmax = model(tokens)
             loss = criterion(res, label)
         logger.info('Val batch {}/{}, loss: {:.6f}'.format(idx + 1, total_batches, loss.item()))
-        recorder.add_record(res, label, source_label)
+        recorder.add_record(res_softmax, label, source_label)
     logger.info('Finish training process in epoch {}. Now calculating metrics ...'.format(epoch + 1))
     mAP = recorder.calc_mAP()
+    mRR = recorder.calc_mRR()
+    recall_K = recorder.calc_recall_K()
     logger.info('mAP: {:.6f}'.format(mAP))
+    logger.info('MRR: {:.6f}'.format(mRR))
+    for i, k in enumerate(RECALL_K):
+        logger.info('Recall@{}: {:.6f}'.format(k, recall_K[i]))
     return mAP
 
 

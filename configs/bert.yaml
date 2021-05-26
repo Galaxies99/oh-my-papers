@@ -9,5 +9,6 @@ max_length: 512
 seq_len: 50
 end_year: 2015
 frequency: 5
+recall_K: [5, 10, 30, 50, 80]
 stats_dir: 'stats/bert'
 data_path: 'data/citation.csv'
