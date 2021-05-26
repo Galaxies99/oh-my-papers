@@ -99,17 +99,17 @@ class SpecterVGAE(nn.Module):
         if type(use_saved_results) is not bool:
             raise TypeError('The type of attribute use_saved_results should be bool.')
         if use_saved_results is False:
-            logger.info('Processing Paper Features using Specter ...')
+            logger.info('Processing paper features using Specter ...')
             self.paper_features = None
             for i in tqdm(range(0, len(papers), process_batch_size)):
                 tokens = self.specter.convert_tokens(papers[i: min(i + process_batch_size, len(papers))]).to(specter_device)
                 feature = self.specter(tokens)
                 if self.paper_features is None:
-                    self.paper_features = feature
+                    self.paper_features = feature.cpu().detach().numpy()
                 else:
-                    self.paper_features = torch.cat([self.paper_features, feature], dim = 0)
-            logger.info('Saving Paper Features into {} ...'.format(filepath))
-            sav_res = self.paper_features.cpu().detach().numpy()
+                    self.paper_features = np.concatenate([self.paper_features, feature.cpu().detach().numpy()], axis = 0)
+            logger.info('Saving Specter paper embedding into {} ...'.format(filepath))
+            sav_res = self.paper_features
             np.save(filepath, sav_res)
             logger.info('File saved, next time you can set use_saved_results=True to read the features.')
             self.paper_features = torch.from_numpy(sav_res)

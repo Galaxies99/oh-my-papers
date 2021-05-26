@@ -50,6 +50,3 @@ class ColoredLogger(logging.Logger):
 
         self.addHandler(console)
         return
-
-logging.setLoggerClass(ColoredLogger)
-logger = logging.getLogger(__name__)

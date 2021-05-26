@@ -4,6 +4,11 @@ multigpu: False
 adam_beta1: 0.9
 adam_beta2: 0.999
 learning_rate: 0.01
+specter_batch_size: 4
+seq_len: 50
+end_year: 2015
+frequency: 5
 stats_dir: 'stats/vgae'
 data_path: 'data/citation.csv'
+specter_embedding_filename: 'specter_embedding.npy'
 embedding_filename: 'embeddings.npy'

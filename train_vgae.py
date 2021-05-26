@@ -28,16 +28,22 @@ MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
 LEARNING_RATE = cfg_dict.get('learning_rate', 0.01)
+SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 16)
+SEQ_LEN = cfg_dict.get('seq_len', 50)
+END_YEAR = cfg_dict.get('end_year', 2015)
+FREQUENCY = cfg_dict.get('frequency', 5)
 STATS_DIR = cfg_dict.get('stats_dir', os.path.join('stats', 'vgae'))
 DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))
+SPECTER_EMBEDDING_FILENAME = cfg_dict.get('specter_embedding_filename', 'specter_embeddings.npy')
 if os.path.exists(STATS_DIR) == False:
     os.makedirs(STATS_DIR)
 checkpoint_file = os.path.join(STATS_DIR, 'checkpoint.tar')
+specter_embedding_file = os.path.join(STATS_DIR, SPECTER_EMBEDDING_FILENAME)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Load data & Build dataset
 logger.info('Reading citation dataset ...')
-_, train_edge_list, test_pos_edge_list, test_neg_edge_list, node_info = get_citation_dataset(DATA_PATH, seq_len = 50, year = 2015, frequency = 5)
+_, train_edge_list, test_pos_edge_list, test_neg_edge_list, node_info = get_citation_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
 logger.info('Finish reading and dividing into training and testing sets. Saving to corresponding files ...')
 node_num = len(node_info)
 pd.DataFrame(train_edge_list, columns = ['source', 'destination']).to_csv(os.path.join(STATS_DIR, 'train_pos_edge_list.csv'))
@@ -47,7 +53,7 @@ logger.info('File saved. Now you can use these files in inference.')
 
 # Build model from configs
 model = SpecterVGAE(embedding_dim = EMBEDDING_DIM)
-model.process_paper_feature(node_info, use_saved_results = False, filepath = os.path.join(STATS_DIR, 'specter.npy'), device = device)
+model.process_paper_feature(node_info, use_saved_results = False, filepath = specter_embedding_file, device = device, specter_device = device, process_batch_size = SPECTER_BATCH_SIZE)
 model.to(device)
 
 if MULTIGPU is True:
@@ -81,6 +87,7 @@ def test_one_epoch(edge_list, pos_edge_list, neg_edge_list):
 def train(train_edge_list, test_pos_edge_list, test_neg_edge_list):
     global cur_epoch
     max_auc = 0
+    final_dict = None
     for epoch in range(MAX_EPOCH):
         cur_epoch = epoch
         loss = train_one_epoch(train_edge_list)
@@ -100,7 +107,9 @@ def train(train_edge_list, test_pos_edge_list, test_neg_edge_list):
                     'optimizer_state_dict': optimizer.state_dict(),
                     'model_state_dict': model.module.state_dict()
                 }
-            torch.save(save_dict, checkpoint_file)
+            final_dict = save_dict
+    assert final_dict is not None
+    torch.save(final_dict, checkpoint_file)
 
 
 if __name__ == '__main__':

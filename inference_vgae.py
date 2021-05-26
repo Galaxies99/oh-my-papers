@@ -24,18 +24,24 @@ with open(CFG_FILE, 'r') as cfg_file:
     
 EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
+SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 16)
+SEQ_LEN = cfg_dict.get('seq_len', 50)
+END_YEAR = cfg_dict.get('end_year', 2015)
+FREQUENCY = cfg_dict.get('frequency', 5)
 STATS_DIR = cfg_dict.get('stats_dir', os.path.join('stats', 'vgae'))
 DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))
 EMBEDDING_FILENAME = cfg_dict.get('embedding_filename', 'embeddings.npy')
+SPECTER_EMBEDDING_FILENAME = cfg_dict.get('specter_embedding_filename', 'specter_embeddings.npy')
 if os.path.exists(STATS_DIR) == False:
     os.makedirs(STATS_DIR)
 checkpoint_file = os.path.join(STATS_DIR, 'checkpoint.tar')
 embedding_file = os.path.join(STATS_DIR, EMBEDDING_FILENAME)
+specter_embedding_file = os.path.join(STATS_DIR, SPECTER_EMBEDDING_FILENAME)
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Load data & Build dataset
 logger.info('Reading citation dataset ...')
-edge_list, _, _, _, node_info = get_citation_dataset(DATA_PATH, seq_len = 50, year = 2015, frequency = 5)
+edge_list, _, _, _, node_info = get_citation_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
 logger.info('File read successfully. Now reading edge list for training ...')
 node_num = len(node_info)
 df = pd.read_csv(os.path.join(STATS_DIR, 'train_pos_edge_list.csv'))
@@ -44,7 +50,7 @@ logger.info('File read successfully.')
 
 # Build model from configs
 model = SpecterVGAE(embedding_dim = EMBEDDING_DIM)
-model.process_paper_feature(node_info, use_saved_results = True, filepath = os.path.join(STATS_DIR, 'specter.npy'), device = device)
+model.process_paper_feature(node_info, use_saved_results = True, filepath = specter_embedding_file, device = device, process_batch_size = SPECTER_BATCH_SIZE)
 
 if os.path.isfile(checkpoint_file):
     checkpoint = torch.load(checkpoint_file)
