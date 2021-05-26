@@ -36,11 +36,11 @@ def split_process_dataset(file_path, seq_len, year, frequency=5):
     data = _convert_df_type(raw_data, ['source_id', 'target_id', 'source_year', 'target_year'], type=int)
     data = _cut_off_dataset(data, year, frequency)
     data = _slicing_citation_text(data, seq_len)
-    train_df, test_df = _split_dataset(data, year)
+    train_df, test_df, whole_df, graph_node_id_threshold = _split_dataset(data, year)
 
-    return train_df, test_df
+    return train_df, test_df, whole_df, graph_node_id_threshold
 
-def construct_graph(df):
+def construct_graph(whole_df, graph_node_id_threshold):
     '''
     Construct the graph based on the input dataframe
 
@@ -53,6 +53,7 @@ def construct_graph(df):
     edge_lists (list) : the list of edges (size: n * 2)
     node_info (list of dict): contains every paper's title and abstract
     '''
+    df = whole_df
     source_ids = df['SourceID'].values.tolist()
     target_ids = df['TargetID'].values.tolist()
     ids = list(set(list(source_ids + target_ids)))
@@ -62,12 +63,12 @@ def construct_graph(df):
     target_abstracts = df['target_abstract'].values.tolist()
 
     edge_lists = [[src, tar] for src, tar in zip(source_ids, target_ids)]
-    node_info = [{} for _ in range(len(ids))]
+    node_info = [{} for _ in range(graph_node_id_threshold)]
     for i, (src, tar) in enumerate(zip(source_ids, target_ids)):
-        if not node_info[src]:
+        if src < graph_node_id_threshold and not node_info[src]:
             node_info[src]['title'] = source_titles[i]
             node_info[src]['abstract'] = source_abstracts[i]
-        if not node_info[tar]:
+        if tar < graph_node_id_threshold and not node_info[tar]:
             node_info[tar]['title'] = target_titles[i]
             node_info[tar]['abstract'] = target_abstracts[i]
 
@@ -141,9 +142,9 @@ def _split_dataset(df, year):
     train_idx = df['source_year'][df['source_year'] < year].index
     test_idx = df['source_year'][df['source_year'] == year].index
 
-    def _get_ids(df, idx):
+    def _get_ids(df, idx, only_tar=False):
         df = df.loc[idx]
-        source_ids = df['source_id'].values.tolist()
+        source_ids = df['source_id'].values.tolist() if not only_tar else []
         target_ids = df['target_id'].values.tolist()
         ids = set(source_ids + target_ids)
 
@@ -152,10 +153,13 @@ def _split_dataset(df, year):
     # renumber the id
     train_node_ids = _get_ids(df, train_idx)
     test_node_ids = _get_ids(df, test_idx)
-    additional_node_ids = test_node_ids - train_node_ids
+    test_target_node_ids = _get_ids(df, test_idx, only_tar=True) - train_node_ids
+    additional_node_ids = test_node_ids - train_node_ids - test_target_node_ids
+
     train_nodes_mapping = dict(zip(list(train_node_ids), range(len(train_node_ids))))
-    additional_nodes_mapping = dict(zip(list(additional_node_ids), range(len(train_node_ids), len(train_node_ids) + len(additional_node_ids))))
-    mapping = {**train_nodes_mapping, **additional_nodes_mapping}
+    test_target_nodes_mapping = dict(zip(list(test_target_node_ids), range(len(train_node_ids), len(train_node_ids) + len(test_target_node_ids))))
+    additional_nodes_mapping = dict(zip(list(additional_node_ids), range(len(train_node_ids) + len(test_target_node_ids), len(train_node_ids) + len(test_target_node_ids) + len(additional_node_ids))))
+    mapping = {**train_nodes_mapping, **test_target_nodes_mapping, **additional_nodes_mapping}
 
     new_src_id, new_tar_id = [], []
     for src, tar in zip(df['source_id'], df['target_id']):
@@ -165,5 +169,6 @@ def _split_dataset(df, year):
     df['TargetID'] = new_tar_id
     train_df = df.loc[train_idx]
     test_df = df.loc[test_idx]
+    graph_node_id_threshold = len(train_node_ids) + len(test_target_node_ids)
 
-    return train_df, test_df
+    return train_df, test_df, df, graph_node_id_threshold
