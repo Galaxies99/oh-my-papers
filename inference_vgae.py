@@ -52,6 +52,7 @@ logger.info('File read successfully.')
 # Build model from configs
 model = SpecterVGAE(embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH)
 model.process_paper_feature(node_info, use_saved_results = True, filepath = specter_embedding_file, device = device, process_batch_size = SPECTER_BATCH_SIZE)
+model.to(device)
 
 if os.path.isfile(checkpoint_file):
     checkpoint = torch.load(checkpoint_file, map_location = device)
@@ -60,8 +61,6 @@ if os.path.isfile(checkpoint_file):
     logger.info('Load checkpoint {} (epoch {})'.format(checkpoint_file, epoch))
 else:
     raise AttributeError('No checkpoint file!')
-
-model.to(device)
 
 if MULTIGPU is True:
     model = torch.nn.DataParallel(model)

@@ -30,11 +30,8 @@ class SimpleBert(nn.Module):
         self.bert = Bert(seq_dim, num_classes, max_length = max_length)
         self.softmax = nn.Softmax(dim = 1)
 
-    def convert_tokens(self, context):
-        return self.bert.convert_tokens(context)
-    
-    def convert_tokens(self, left_context, right_context):
-        return self.bert.convert_tokens(left_context, right_context)
+    def convert_tokens(self, context, right_context = None):
+        return self.bert.convert_tokens(context, right_context)
     
     def forward(self, tokens):
         res = self.bert(tokens)

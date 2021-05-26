@@ -1,0 +1,17 @@
+{
+    "inference": [
+        {
+            "left_context": "ResNet",
+            "right_context": "is a well-built neural network"
+        },
+        {
+            "context": "ResNet is a well-built neural network"
+        },
+        {
+            "context": "ResNet"
+        },
+        {
+            "context": "Masked R-CNN"
+        }
+    ]
+}

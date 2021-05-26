@@ -29,13 +29,13 @@ class Bert(nn.Module):
         else:
             self.linear = nn.Linear(bert_hidden, feature_dim)
 
-    def convert_tokens(self, context):
-        return self.tokenizer(context, return_tensors = 'pt')
-    
-    def convert_tokens(self, left_context, right_context):
-        assert len(left_context) == len(right_context)
-        context_combined = [(left_context[i] + self.tokenizer.sep_token + right_context[i]) for i in range(len(left_context))]
-        return self.tokenizer(context_combined, padding = True, truncation = True, return_tensors = 'pt', max_length = self.max_length)
+    def convert_tokens(self, context, right_context = None):
+        if right_context is None:
+            return self.tokenizer(context, return_tensors = 'pt')
+        else:
+            assert len(context) == len(right_context)
+            context_combined = [(context[i] + self.tokenizer.sep_token + right_context[i]) for i in range(len(context))]
+            return self.tokenizer(context_combined, padding = True, truncation = True, return_tensors = 'pt', max_length = self.max_length)
 
     def forward(self, tokens):
         res = self.bert_model(**tokens).last_hidden_state[:, self.seq_dim, :]
