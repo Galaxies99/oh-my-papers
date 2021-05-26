@@ -45,12 +45,18 @@ def get_bert_dataset(file_path, seq_len=50, year=2016, frequency=5):
     seq_len: maximal length of the citation context
     year: year of boundary (training and test)
     frequency: only articles that are referenced more than 'frequency' are retained
+
+    Returns
+    ----------
+    train_dataset: training dataset which contains (left context, right context and labels)
+    val_dataset: validation dataset which contains (left context, right context and labels)
+    ground_truth: a list of dict that contains paper information ({'title', 'abstract', 'venue', 'year', 'author'})
     '''
-    train_df, test_df, _, _ = split_process_dataset(file_path=file_path, seq_len=seq_len, year=year, frequency=frequency)
+    train_df, test_df, ground_truth, _, _ = split_process_dataset(file_path=file_path, seq_len=seq_len, year=year, frequency=frequency)
     train_dataset = PapersDataset(train_df)
     val_dataset = PapersDataset(test_df)
 
-    return train_dataset, val_dataset
+    return train_dataset, val_dataset, ground_truth
 
 def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
     '''
@@ -63,7 +69,7 @@ def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
     year: year of boundary (training and test)
     frequency: only articles that are referenced more than 'frequency' are retained
     '''
-    _, _, whole_df, graph_node_id_threshold = split_process_dataset(file_path=file_path, seq_len=seq_len, year=year, frequency=frequency)
+    _, _, _, whole_df, graph_node_id_threshold = split_process_dataset(file_path=file_path, seq_len=seq_len, year=year, frequency=frequency)
     edge_list, node_info = construct_graph(whole_df, graph_node_id_threshold)
     random.shuffle(edge_list)
     train_edge_num = int(len(edge_list) * 0.9)

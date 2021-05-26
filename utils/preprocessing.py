@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 
 def split_process_dataset(file_path, seq_len, year, frequency=5):
     '''
@@ -37,8 +36,9 @@ def split_process_dataset(file_path, seq_len, year, frequency=5):
     data = _cut_off_dataset(data, year, frequency)
     data = _slicing_citation_text(data, seq_len)
     train_df, test_df, whole_df, graph_node_id_threshold = _split_dataset(data, year)
+    ground_truth = _get_ground_truth(whole_df, graph_node_id_threshold)
 
-    return train_df, test_df, whole_df, graph_node_id_threshold
+    return train_df, test_df, ground_truth, whole_df, graph_node_id_threshold
 
 def construct_graph(whole_df, graph_node_id_threshold):
     '''
@@ -172,3 +172,26 @@ def _split_dataset(df, year):
     graph_node_id_threshold = len(train_node_ids) + len(test_target_node_ids)
 
     return train_df, test_df, df, graph_node_id_threshold
+
+def _get_ground_truth(df, graph_node_id_threshold):
+    groud_truth = [{} for _ in range(graph_node_id_threshold)]
+
+    data = df[['SourceID', 'TargetID', 'source_title', 'source_abstract', 'source_venue', 'source_year', 'source_author',
+             'target_title', 'target_abstract', 'target_venue', 'target_year', 'target_author']].to_numpy()
+    keys = ['title', 'abstract', 'venue', 'year', 'author']
+    for _, record in enumerate(data):
+        src_id, tar_id = record[0], record[1]
+        if src_id < graph_node_id_threshold and not groud_truth[src_id]:
+            values = record[2:7].tolist()
+            groud_truth[src_id] = dict(zip(keys, values))
+        if tar_id < graph_node_id_threshold and not groud_truth[tar_id]:
+            values = record[7:].tolist()
+            groud_truth[tar_id] = dict(zip(keys, values))
+    return groud_truth
+
+if __name__ == "__main__":
+    train_df, test_df, ground_truth, whole_df, graph_node_id_threshold = split_process_dataset(file_path='../data/citation.csv', seq_len=50, year=2015, frequency=5)
+
+    # construct graph
+    edge_list, node_info = construct_graph(whole_df, graph_node_id_threshold)
+
