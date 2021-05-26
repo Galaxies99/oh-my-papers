@@ -17,7 +17,7 @@ class SimpleBert(nn.Module):
     '''
     Simple Bert model for context-based citation recommendation.
     '''
-    def __init__(self, num_classes, seq_dim = 0):
+    def __init__(self, num_classes, seq_dim = 0, max_length = 512):
         '''
         Initialize simple Bert model for context-based citation recommendation.
 
@@ -27,18 +27,23 @@ class SimpleBert(nn.Module):
         seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result.
         '''
         super(SimpleBert, self).__init__()
-        self.bert = Bert(seq_dim, num_classes)
-        self.softmax = nn.Softmax(num_classes)
+        self.bert = Bert(seq_dim, num_classes, max_length = max_length)
+
+    def convert_tokens(self, context):
+        return self.bert.convert_tokens(context)
     
-    def forward(self, context):
-        return self.softmax(self.bert(context))
+    def convert_tokens(self, left_context, right_context):
+        return self.bert.convert_tokens(left_context, right_context)
+    
+    def forward(self, tokens):
+        return self.bert(tokens)
 
 
 class CitationBert(nn.Module):
     '''
     Citation-awared Bert model for context-based citation recommendation.
     '''
-    def __init__(self, num_classes, embedding_dim, seq_dim = 0, S = 4):
+    def __init__(self, num_classes, embedding_dim, seq_dim = 0, max_length = 512, S = 4):
         '''
         Initialize citation-awared Bert model for context-based citation recommendation.
 
@@ -47,38 +52,45 @@ class CitationBert(nn.Module):
         num_classes: int, the number of categories;
         embedding_dim: int, the dimensions of embeddings;
         seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result;
+        max_length: int, the max length of tokens (enable padding / truncation);
         S: int, optional, default: 4, the hyper-parameter of cosine similarity softmax,
            See: https://www.tutorialexample.com/understand-cosine-similarity-softmax-a-beginner-guide-machine-learning/ for details.
         '''
         super(CitationBert, self).__init__()
-        self.bert = Bert(seq_dim, embedding_dim)
-        self.softmax = nn.Softmax(num_classes)
+        self.bert = Bert(seq_dim, embedding_dim, max_length = max_length)
         self.embedding_dim = embedding_dim
         self.num_classes = num_classes
         self.S = S
 
-    def forward(self, context, paper_embeddings):
-        batch_size = len(context)
-        context_embeddings = self.bert(context)
+    def convert_tokens(self, context):
+        return self.bert.convert_tokens(context)
+
+    def convert_tokens(self, left_context, right_context):
+        return self.bert.convert_tokens(left_context, right_context)
+    
+    def forward(self, tokens, paper_embeddings):
+        batch_size = tokens.shape[0]
+        context_embeddings = self.bert(tokens)
         assert paper_embeddings.shape == torch.size([self.embedding_dim, self.num_classes])
-        sim = F.cosine_similarity(paper_embeddings.repeat(batch_size, self.embedding_dim, self.num_classes), context_embeddings, dim = 1)
-        return self.softmax(self.S * sim)
+        sim = F.cosine_similarity(paper_embeddings.repeat(batch_size, 1, 1), context_embeddings, dim = 1)
+        return self.S * sim
 
 
 class SpecterVGAE(nn.Module):
     '''
     Variantional Graph Auto-encoder with Specter features.
     '''
-    def __init__(self, embedding_dim):
+    def __init__(self, embedding_dim, max_length = 512):
         '''
         Initialize citation-awared Bert model for context-based citation recommendation.
 
         Parameters
         ----------
-        embedding_dim: int, the dimensions of embeddings.
+        embedding_dim: int, the dimensions of embeddings;
+        max_length: int, the max length of tokens (enable padding / truncation).
         '''
         super(SpecterVGAE, self).__init__()
-        self.specter = Specter()
+        self.specter = Specter(max_length = max_length)
         specter_dim = 768
         self.vgae = VariantionalGraphAutoEncoder(specter_dim, embedding_dim)
     

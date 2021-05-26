@@ -28,7 +28,8 @@ MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
 LEARNING_RATE = cfg_dict.get('learning_rate', 0.01)
-SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 16)
+SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 4)
+MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
 FREQUENCY = cfg_dict.get('frequency', 5)
@@ -52,7 +53,7 @@ pd.DataFrame(test_neg_edge_list, columns = ['source', 'destination']).to_csv(os.
 logger.info('File saved. Now you can use these files in inference.')
 
 # Build model from configs
-model = SpecterVGAE(embedding_dim = EMBEDDING_DIM)
+model = SpecterVGAE(embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH)
 model.process_paper_feature(node_info, use_saved_results = False, filepath = specter_embedding_file, device = device, specter_device = device, process_batch_size = SPECTER_BATCH_SIZE)
 model.to(device)
 

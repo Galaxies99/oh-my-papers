@@ -27,9 +27,10 @@ class PapersDataset(Dataset):
         self.left_context = df.LeftString.tolist()
         self.right_context = df.RightString.tolist()
         self.labels = df.TargetID.tolist()
+        self.source_labels = df.SourceID.tolist()
 
     def __getitem__(self, index):
-        return self.left_context[index], self.right_context[index], self.labels[index]
+        return self.left_context[index], self.right_context[index], self.labels[index], self.source_labels[index]
 
     def __len__(self):
         return len(self.left_context)

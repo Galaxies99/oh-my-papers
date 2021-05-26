@@ -24,7 +24,8 @@ with open(CFG_FILE, 'r') as cfg_file:
     
 EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
-SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 16)
+SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 4)
+MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
 FREQUENCY = cfg_dict.get('frequency', 5)
@@ -49,7 +50,7 @@ train_edge_list = [[row['source'], row['destination']] for _, row in df.iterrows
 logger.info('File read successfully.')
 
 # Build model from configs
-model = SpecterVGAE(embedding_dim = EMBEDDING_DIM)
+model = SpecterVGAE(embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH)
 model.process_paper_feature(node_info, use_saved_results = True, filepath = specter_embedding_file, device = device, process_batch_size = SPECTER_BATCH_SIZE)
 
 if os.path.isfile(checkpoint_file):
