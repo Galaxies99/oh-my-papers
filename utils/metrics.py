@@ -31,22 +31,20 @@ class ResultRecorder(object):
         ap_dict_score = {}
         ap_dict_true = {}
         source_dict = {}
-        for source in self.source_labels:
-            source_dict[source] = []
         for source, target in set(zip(self.source_labels, self.labels)):
-            ap_dict_score[(source, target)] = []
-            ap_dict_true[(source, target)] = []
-            source_dict[source].append(target)
+            ap_dict_score[target] = []
+            ap_dict_true[target] = []
+            source_dict[source] = source_dict.get(source, []) + [target]
         for i in range(num_records):
             source = self.source_labels[i]
             target = self.labels[i]
             target_list = source_dict.get(source, [])
             for potential_target in target_list:
-                ap_dict_score[(source, potential_target)].append(self.preds[i][potential_target])
+                ap_dict_score[potential_target].append(self.preds[i][potential_target])
                 if potential_target == target:
-                    ap_dict_true[(source, potential_target)].append(1)
+                    ap_dict_true[potential_target].append(1)
                 else:
-                    ap_dict_true[(source, potential_target)].append(0)
+                    ap_dict_true[potential_target].append(0)
         total_AP = 0
         total_cnt = 0
         for key in ap_dict_score.keys():

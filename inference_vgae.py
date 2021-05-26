@@ -54,7 +54,7 @@ model = SpecterVGAE(embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH)
 model.process_paper_feature(node_info, use_saved_results = True, filepath = specter_embedding_file, device = device, process_batch_size = SPECTER_BATCH_SIZE)
 
 if os.path.isfile(checkpoint_file):
-    checkpoint = torch.load(checkpoint_file)
+    checkpoint = torch.load(checkpoint_file, map_location = device)
     model.load_state_dict(checkpoint['model_state_dict'])
     epoch = checkpoint['epoch']
     logger.info('Load checkpoint {} (epoch {})'.format(checkpoint_file, epoch))

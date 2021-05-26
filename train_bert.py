@@ -52,6 +52,7 @@ val_dataloader = DataLoader(val_dataset, batch_size = BATCH_SIZE, shuffle = True
 
 # Build model from configs
 model = SimpleBert(num_classes = node_num, max_length = MAX_LENGTH)
+model.to(device)
 
 # Define optimizer
 optimizer = Adam(model.parameters(), betas = (ADAM_BETA1, ADAM_BETA2), lr = LEARNING_RATE)
@@ -63,13 +64,12 @@ criterion = CrossEntropyLoss()
 start_epoch = 0
 if os.path.isfile(checkpoint_file):
     logging.info('Load checkpoint from {} ...'.format(checkpoint_file))
-    checkpoint = torch.load(checkpoint_file)
+    checkpoint = torch.load(checkpoint_file, map_location = device)
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     start_epoch = checkpoint['epoch']
     logging.info('Checkpoint {} (epoch {}) loaded.'.format(checkpoint_file, start_epoch))
 
-model.to(device)
 
 if MULTIGPU is True:
     model = torch.nn.DataParallel(model)
