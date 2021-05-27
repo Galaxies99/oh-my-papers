@@ -2,6 +2,7 @@ import os
 import os.path as osp
 import pandas as pd
 import numpy as np
+from tqdm import tqdm
 import torch
 import random
 import tarfile
@@ -77,7 +78,7 @@ def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
     train_edge_list = edge_list[:train_edge_num]
     test_pos_edge_list = edge_list[train_edge_num:]
     test_neg_edge_list = []
-    for i in range(len(test_pos_edge_list)):
+    for i in tqdm(range(len(test_pos_edge_list))):
         valid_sample = False
         while valid_sample == False:
             src = random.randint(0, node_num - 1)

@@ -7,7 +7,7 @@ learning_rate: 0.01
 specter_batch_size: 4
 max_length: 512
 seq_len: 50
-end_year: 2015
+end_year: 2020
 frequency: 5
 stats_dir: 'stats/vgae'
 data_path: 'data/citation.csv'

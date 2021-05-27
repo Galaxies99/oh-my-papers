@@ -76,7 +76,7 @@ if MULTIGPU is True:
     model = torch.nn.DataParallel(model)
 
 # Result Recorder
-recorder = ResultRecorder(paper_num, recall_K = RECALL_K)
+recorder = ResultRecorder(paper_num, include_mAP = False, recall_K = RECALL_K)
 
 
 def train_one_epoch(epoch):
@@ -88,11 +88,11 @@ def train_one_epoch(epoch):
         left_context, right_context, label, _ = data
         tokens = model.convert_tokens(list(left_context), list(right_context)).to(device)
         label = torch.LongTensor(label).to(device)
-        res, res_softmax = model(tokens)
+        res, _ = model(tokens)
         loss = criterion(res, label)
         loss.backward()
         optimizer.step()
-        logger.info('Train batch {}/{}, loss: {:.6f}'.format(idx + 1, total_batches, loss.item()))
+        logger.info('Train epoch {}/{} batch {}/{}, loss: {:.6f}'.format(epoch + 1, MAX_EPOCH, idx + 1, total_batches, loss.item()))
     logger.info('Finish training process in epoch {}.'.format(epoch + 1))
 
 def val_one_epoch(epoch):
@@ -108,27 +108,25 @@ def val_one_epoch(epoch):
         with torch.no_grad():
             res, res_softmax = model(tokens)
             loss = criterion(res, label)
-        logger.info('Val batch {}/{}, loss: {:.6f}'.format(idx + 1, total_batches, loss.item()))
+        logger.info('Val epoch {}/{} batch {}/{}, loss: {:.6f}'.format(epoch + 1, MAX_EPOCH, idx + 1, total_batches, loss.item()))
         recorder.add_record(res_softmax, label, source_label)
     logger.info('Finish training process in epoch {}. Now calculating metrics ...'.format(epoch + 1))
-    mAP = recorder.calc_mAP()
     mRR = recorder.calc_mRR()
     recall_K = recorder.calc_recall_K()
-    logger.info('mAP: {:.6f}'.format(mAP))
     logger.info('MRR: {:.6f}'.format(mRR))
     for i, k in enumerate(RECALL_K):
         logger.info('Recall@{}: {:.6f}'.format(k, recall_K[i]))
-    return mAP
+    return mRR
 
 
 
 def train(start_epoch):
-    best_mAP = 0.0
+    best_mRR = 0.0
     for epoch in range(start_epoch, MAX_EPOCH):
         train_one_epoch(epoch)
-        mAP = val_one_epoch(epoch)
-        if mAP > best_mAP:
-            best_mAP = mAP
+        mRR = val_one_epoch(epoch)
+        if mRR > best_mRR:
+            best_mRR = mRR
             if MULTIGPU is False:
                 save_dict = {
                     'epoch': epoch + 1,

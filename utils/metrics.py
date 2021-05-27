@@ -1,12 +1,12 @@
-from os import system
 from sklearn.metrics import average_precision_score
 import numpy as np
 
 
 class ResultRecorder(object):
-    def __init__(self, node_num, recall_K = [5, 10, 30, 50, 80]):
+    def __init__(self, node_num, include_mAP = True, recall_K = [5, 10, 30, 50, 80]):
         super(ResultRecorder, self).__init__()
         self.node_num = node_num
+        self.include_mAP = include_mAP
         self.recall_K = recall_K
         self.clear()
 
@@ -24,10 +24,11 @@ class ResultRecorder(object):
         # label and source_label has the size of batch_size
         label = label.cpu().detach().numpy()    
         source_label = source_label.cpu().detach().numpy()
-        # For mAP metric
-        self.preds = np.concatenate([self.preds, pred], axis = 0).astype(np.int64)
-        self.labels = np.concatenate([self.labels, label], axis = 0).astype(np.int64)
-        self.source_labels = np.concatenate([self.source_labels, source_label], axis = 0).astype(np.int64)
+        if self.include_mAP:
+            # For mAP metric
+            self.preds = np.concatenate([self.preds, pred], axis = 0).astype(np.int64)
+            self.labels = np.concatenate([self.labels, label], axis = 0).astype(np.int64)
+            self.source_labels = np.concatenate([self.source_labels, source_label], axis = 0).astype(np.int64)
         # For MRR metric & Recall@K metrics
         batch_size = label.shape[0]
         for i in range(batch_size):
@@ -39,6 +40,8 @@ class ResultRecorder(object):
             self.RRcnt += 1
 
     def calc_mAP(self):
+        if self.include_mAP is False:
+            raise AttributeError('Not include mAP in the metric settings.')
         assert self.source_labels.shape == self.labels.shape
         num_records = self.labels.shape[0]
         ap_dict_score = {}
