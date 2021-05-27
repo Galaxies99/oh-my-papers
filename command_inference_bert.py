@@ -6,7 +6,7 @@ import argparse
 import logging
 import numpy as np
 from utils.logger import ColoredLogger
-from dataset import get_citation_dataset
+from dataset import get_bert_dataset
 from models.models import SimpleBert
 
 
@@ -17,15 +17,17 @@ logger = logging.getLogger(__name__)
 parser = argparse.ArgumentParser()
 parser.add_argument('--cfg', default = os.path.join('configs', 'bert.yaml'), help = 'Config File', type = str)
 parser.add_argument('--input', default = os.path.join('examples', 'bert.json'))
+parser.add_argument('--output', default = os.path.join('examples', 'bert-res.json'))
 FLAGS = parser.parse_args()
 CFG_FILE = FLAGS.cfg
 INPUT_FILE = FLAGS.input
+OUTPUT_FILE = FLAGS.output
 
 with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
 
-with open(INPUT_FILE, 'r') as input_file:
-    inference_json = json.load(input_file)
+if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
+    os.makedirs(os.path.dirname(OUTPUT_FILE))
     
 EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
@@ -44,12 +46,12 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Load data & Build dataset
 logger.info('Reading bert dataset & citation dataset ...')
-_, _, _, _, node_info = get_citation_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
-node_num = len(node_info)
+_, _, paper_info = get_bert_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
+paper_num = len(paper_info)
 logger.info('Finish reading and dividing into training and testing sets.')
 
 # Build model from configs
-model = SimpleBert(num_classes = node_num, max_length = MAX_LENGTH)
+model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
 model.to(device)
 
 # Read checkpoints
@@ -67,9 +69,21 @@ if MULTIGPU is True:
 
 
 def get_top_K_ids(res, K):
-    assert K <= node_num
-    res = res.reshape(node_num)
+    assert K <= paper_num
+    res = res.reshape(paper_num)
     return np.argsort(- res)[:K].tolist()
+
+
+def get_paper_info(paper_info, res_ids):
+    res_dict = {}
+    res_dict['inference'] = []
+    for res in res_ids:
+        res_item = {}
+        res_item['result'] = []
+        for id in res:
+            res_item['result'].append(paper_info[id])
+        res_dict['inference'].append(res_item['result'])
+    return res_dict
 
 
 def _inference_context(context):
@@ -92,7 +106,9 @@ def _inference_lr_context(left_context, right_context):
     return res_softmax.cpu().detach().numpy()
 
 
-def inference(inference_json):
+def inference(input_file, output_file):
+    with open(input_file, 'r') as f:
+        inference_json = json.load(f)
     if 'inference' not in inference_json.keys():
         raise KeyError('"inference" not in the keys of the json input.')
     inference_list = inference_json['inference']
@@ -106,11 +122,14 @@ def inference(inference_json):
             raise KeyError('Neither "context" nor both "left_context" and "right_context" is specified in the json input.')
         top_K_ids = get_top_K_ids(res_softmax, K)
         res_ids.append(top_K_ids)
-    return res_ids
+    res_dict = get_paper_info(paper_info, res_ids)
+    with open(output_file, 'w') as f:
+        json.dump(res_dict, f)
+    return res_dict
 
 
 if __name__ == '__main__':
-    res_ids = inference(inference_json)
+    res_ids = inference(INPUT_FILE, OUTPUT_FILE)
     print(res_ids)
     # TODO: res_ids to paper infomation
     # TODO: create an inference class to call in order to reduce the inference time.

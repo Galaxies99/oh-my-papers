@@ -5,7 +5,7 @@ import argparse
 import logging
 from utils.logger import ColoredLogger
 from torch.optim import Adam
-from dataset import get_bert_dataset, get_citation_dataset
+from dataset import get_bert_dataset
 from torch.utils.data import DataLoader
 from models.models import SimpleBert
 from utils.criterion import CrossEntropyLoss
@@ -44,15 +44,14 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Load data & Build dataset
 logger.info('Reading bert dataset & citation dataset ...')
-train_dataset, val_dataset = get_bert_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
-_, _, _, _, node_info = get_citation_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
-node_num = len(node_info)
+train_dataset, val_dataset, paper_info = get_bert_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
+paper_num = len(paper_info)
 logger.info('Finish reading and dividing into training and testing sets.')
 train_dataloader = DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle = True)
 val_dataloader = DataLoader(val_dataset, batch_size = BATCH_SIZE, shuffle = True)
 
 # Build model from configs
-model = SimpleBert(num_classes = node_num, max_length = MAX_LENGTH)
+model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
 model.to(device)
 
 # Define optimizer
@@ -76,7 +75,7 @@ if MULTIGPU is True:
     model = torch.nn.DataParallel(model)
 
 # Result Recorder
-recorder = ResultRecorder(node_num, recall_K = RECALL_K)
+recorder = ResultRecorder(paper_num, recall_K = RECALL_K)
 
 
 def train_one_epoch(epoch):
