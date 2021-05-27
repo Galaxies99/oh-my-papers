@@ -8,6 +8,8 @@ from utils.logger import ColoredLogger
 from dataset import get_bert_dataset
 from models.models import SimpleBert
 
+from time import time
+
 
 logging.setLoggerClass(ColoredLogger)
 logger = logging.getLogger(__name__)
@@ -55,10 +57,6 @@ class BertInferencer(object):
         if MULTIGPU is True:
             self.model = torch.nn.DataParallel(self.model)
 
-    def get_top_K_ids(self, res):
-        res = res.reshape(self.paper_num)
-        return np.argsort(- res)[:self.K].tolist()
-
     def get_paper_info(self, res_ids):
         res_dict = {}
         res_dict['inference'] = []
@@ -78,7 +76,7 @@ class BertInferencer(object):
         with torch.no_grad():
             _, res_softmax = self.model(tokens)
         logger.info('Inference successfully finished!')
-        return res_softmax.cpu().detach().numpy()
+        return res_softmax
 
 
     def _inference_lr_context(self, left_context, right_context): 
@@ -88,7 +86,7 @@ class BertInferencer(object):
         with torch.no_grad():
             _, res_softmax = self.model(tokens)
         logger.info('Inference successfully finished!')
-        return res_softmax.cpu().detach().numpy()
+        return res_softmax
 
 
     def inference(self, input_dict):
@@ -103,7 +101,8 @@ class BertInferencer(object):
                 res_softmax = self._inference_lr_context(item['left_context'], item['right_context'])
             else:
                 raise KeyError('Neither "context" nor both "left_context" and "right_context" is specified in the json input.')
-            top_K_ids = self.get_top_K_ids(res_softmax)
+            _, top_K_ids = torch.topk(res_softmax, k=self.K, largest=True, sorted=True)
+            top_K_ids = top_K_ids[0].detach().cpu().tolist()
             res_ids.append(top_K_ids)
         res_dict = self.get_paper_info(res_ids)
         return res_dict

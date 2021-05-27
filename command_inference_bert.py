@@ -65,13 +65,6 @@ else:
 if MULTIGPU is True:
     model = torch.nn.DataParallel(model)
 
-
-def get_top_K_ids(res, K):
-    assert K <= paper_num
-    res = res.reshape(paper_num)
-    return np.argsort(- res)[:K].tolist()
-
-
 def get_paper_info(paper_info, res_ids):
     res_dict = {}
     res_dict['inference'] = []
@@ -91,7 +84,7 @@ def _inference_context(context):
     with torch.no_grad():
         _, res_softmax = model(tokens)
     logger.info('Inference successfully finished!')
-    return res_softmax.cpu().detach().numpy()
+    return res_softmax
 
 
 def _inference_lr_context(left_context, right_context): 
@@ -101,7 +94,7 @@ def _inference_lr_context(left_context, right_context):
     with torch.no_grad():
         _, res_softmax = model(tokens)
     logger.info('Inference successfully finished!')
-    return res_softmax.cpu().detach().numpy()
+    return res_softmax
 
 
 def inference(input_file, output_file):
@@ -118,7 +111,8 @@ def inference(input_file, output_file):
             res_softmax = _inference_lr_context(item['left_context'], item['right_context'])
         else:
             raise KeyError('Neither "context" nor both "left_context" and "right_context" is specified in the json input.')
-        top_K_ids = get_top_K_ids(res_softmax, K)
+        _, top_K_ids = torch.topk(res_softmax, k=self.K, largest=True, sorted=True)
+        top_K_ids = top_K_ids[0].detach().cpu().tolist()
         res_ids.append(top_K_ids)
     res_dict = get_paper_info(paper_info, res_ids)
     with open(output_file, 'w') as f:
