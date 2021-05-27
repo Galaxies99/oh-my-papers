@@ -4,7 +4,7 @@ import torch
 import argparse
 import logging
 from utils.logger import ColoredLogger
-from torch.optim import Adam
+from torch.optim import AdamW
 from dataset import get_bert_dataset
 from torch.utils.data import DataLoader
 from models.models import SimpleBert
@@ -24,10 +24,11 @@ with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
     
 MAX_EPOCH = cfg_dict.get('max_epoch', 500)
-EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
+ADAM_WEIGHT_DECAY = cfg_dict.get('adam_weight_decay', 0.01)
+ADAM_EPS = cfg_dict.get('adam_eps', 1e-6)
 LEARNING_RATE = cfg_dict.get('learning_rate', 0.01)
 BATCH_SIZE = cfg_dict.get('batch_size', 4)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
@@ -55,7 +56,7 @@ model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
 model.to(device)
 
 # Define optimizer
-optimizer = Adam(model.parameters(), betas = (ADAM_BETA1, ADAM_BETA2), lr = LEARNING_RATE)
+optimizer = AdamW(model.parameters(), betas = (ADAM_BETA1, ADAM_BETA2), lr = LEARNING_RATE, weight_decay = ADAM_WEIGHT_DECAY, eps = ADAM_EPS)
 
 # Define criterion
 criterion = CrossEntropyLoss()

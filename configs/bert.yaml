@@ -1,13 +1,14 @@
-max_epoch: 2000
-embedding_dim: 768
+max_epoch: 30
 multigpu: False
 adam_beta1: 0.9
 adam_beta2: 0.999
-learning_rate: 0.01
-batch_size: 4
-max_length: 512
+adam_weight_decay: 0.01
+adam_eps: 0.000001
+learning_rate: 0.00005
+batch_size: 8
+max_length: 128
 seq_len: 50
-end_year: 2015
+end_year: 2020
 frequency: 5
 recall_K: [5, 10, 30, 50, 80]
 K: 10
