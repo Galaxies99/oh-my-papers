@@ -7,6 +7,7 @@ paper_data
 data/
 stats/
 examples/bert-res.json
+examples/citation_bert-res.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

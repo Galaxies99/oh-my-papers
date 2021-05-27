@@ -44,6 +44,8 @@ DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))
 EMBEDDING_PATH = cfg_dict.get('embedding_path', os.path.join('stats', 'vgae', 'embedding.npy'))
 if os.path.exists(STATS_DIR) == False:
     os.makedirs(STATS_DIR)
+if os.path.isfile(EMBEDDING_PATH) == False:
+    raise AttributeError('No embedding file.')
 checkpoint_file = os.path.join(STATS_DIR, 'checkpoint.tar')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 

@@ -6,7 +6,7 @@ import argparse
 import logging
 from utils.logger import ColoredLogger
 from dataset import get_bert_dataset
-from models.models import SimpleBert
+from models.models import CitationBert
 
 
 logging.setLoggerClass(ColoredLogger)
@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 # Parse Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--cfg', default = os.path.join('configs', 'bert.yaml'), help = 'Config File', type = str)
-parser.add_argument('--input', default = os.path.join('examples', 'bert.json'))
-parser.add_argument('--output', default = os.path.join('examples', 'bert-res.json'))
+parser.add_argument('--cfg', default = os.path.join('configs', 'citation_bert_vgae.yaml'), help = 'Config File', type = str)
+parser.add_argument('--input', default = os.path.join('examples', 'citation_bert.json'))
+parser.add_argument('--output', default = os.path.join('examples', 'citation_bert-res.json'))
 FLAGS = parser.parse_args()
 CFG_FILE = FLAGS.cfg
 INPUT_FILE = FLAGS.input
@@ -27,8 +27,10 @@ with open(CFG_FILE, 'r') as cfg_file:
 
 if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
     os.makedirs(os.path.dirname(OUTPUT_FILE))
-    
+
 MULTIGPU = cfg_dict.get('multigpu', False)
+EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
+COSINE_SOFTMAX_S = cfg_dict.get('cosine_softmax_S', 4)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
@@ -36,8 +38,11 @@ FREQUENCY = cfg_dict.get('frequency', 5)
 K = cfg_dict.get('K', 10)
 STATS_DIR = cfg_dict.get('stats_dir', os.path.join('stats', 'bert'))
 DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))
+EMBEDDING_PATH = cfg_dict.get('embedding_path', os.path.join('stats', 'vgae', 'embedding.npy'))
 if os.path.exists(STATS_DIR) == False:
     os.makedirs(STATS_DIR)
+if os.path.isfile(EMBEDDING_PATH) == False:
+    raise AttributeError('No embedding file.')
 checkpoint_file = os.path.join(STATS_DIR, 'checkpoint.tar')
 device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -48,8 +53,9 @@ paper_num = len(paper_info)
 logger.info('Finish reading and dividing into training and testing sets.')
 
 # Build model from configs
-model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
+model = CitationBert(num_classes = paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S)
 model.to(device)
+model.set_paper_embeddings(filename = EMBEDDING_PATH, device = device)
 
 # Read checkpoints
 if os.path.isfile(checkpoint_file):

@@ -75,11 +75,8 @@ class CitationBert(nn.Module):
         self.paper_embeddings = torch.from_numpy(np.load(filename)).to(device).transpose(1, 0)
         assert self.paper_embeddings.shape == (self.embedding_dim, self.num_classes)
 
-    def convert_tokens(self, context):
-        return self.bert.convert_tokens(context)
-
-    def convert_tokens(self, left_context, right_context):
-        return self.bert.convert_tokens(left_context, right_context)
+    def convert_tokens(self, context, right_context = None):
+        return self.bert.convert_tokens(context, right_context)
     
     def forward(self, tokens):
         if self.paper_embeddings is None:

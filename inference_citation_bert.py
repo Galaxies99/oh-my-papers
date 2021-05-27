@@ -5,17 +5,19 @@ import torch
 import logging
 from utils.logger import ColoredLogger
 from dataset import get_bert_dataset
-from models.models import SimpleBert
+from models.models import CitationBert
 
 
 logging.setLoggerClass(ColoredLogger)
 logger = logging.getLogger(__name__)
 
 
-class BertInferencer(object):
+class CitationBertInferencer(object):
     def __init__(self, **kwargs):
-        super(BertInferencer, self).__init__()
+        super(CitationBertInferencer, self).__init__()
         MULTIGPU = kwargs.get('multigpu', False)
+        EMBEDDING_DIM = kwargs.get('embedding_dim', 768)
+        COSINE_SOFTMAX_S = kwargs.get('cosine_softmax_S', 4)
         MAX_LENGTH = kwargs.get('max_length', 512)
         SEQ_LEN = kwargs.get('seq_len', 50)
         END_YEAR = kwargs.get('end_year', 2015)
@@ -23,8 +25,11 @@ class BertInferencer(object):
         self.K = kwargs.get('K', 10)
         STATS_DIR = kwargs.get('stats_dir', os.path.join('stats', 'bert'))
         DATA_PATH = kwargs.get('data_path', os.path.join('data', 'citation.csv'))
+        EMBEDDING_PATH = kwargs.get('embedding_path', os.path.join('stats', 'vgae', 'embedding.npy'))
         if os.path.exists(STATS_DIR) == False:
             os.makedirs(STATS_DIR)
+        if os.path.isfile(EMBEDDING_PATH) == False:
+            raise AttributeError('No embedding file.')
         checkpoint_file = os.path.join(STATS_DIR, 'checkpoint.tar')
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -38,8 +43,9 @@ class BertInferencer(object):
             self.K = self.paper_num
 
         # Build model from configs
-        self.model = SimpleBert(num_classes = self.paper_num, max_length = MAX_LENGTH)
+        self.model = CitationBert(num_classes = self.paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S)
         self.model.to(self.device)
+        self.model.set_paper_embeddings(filename = EMBEDDING_PATH, device = self.device)
 
         # Read checkpoints
         if os.path.isfile(checkpoint_file):
@@ -106,12 +112,12 @@ class BertInferencer(object):
 
 
 if __name__ == '__main__':
-    with open('configs/bert.yaml', 'r') as cfg_file:
+    with open('configs/citation_bert_vgae.yaml', 'r') as cfg_file:
         cfgs = yaml.load(cfg_file, Loader=yaml.FullLoader)
-    inferencer = BertInferencer(**cfgs)
-    with open('examples/bert.json', 'r') as f:
+    inferencer = CitationBertInferencer(**cfgs)
+    with open('examples/citation_bert.json', 'r') as f:
         input_dict = json.load(f)
     output_dict = inferencer.inference(input_dict)
-    with open('examples/bert-res.json', 'w') as f:
+    with open('examples/citation_bert-res.json', 'w') as f:
         json.dump(output_dict, f)
     
