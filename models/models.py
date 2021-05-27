@@ -42,7 +42,7 @@ class CitationBert(nn.Module):
     '''
     Citation-awared Bert model for context-based citation recommendation.
     '''
-    def __init__(self, num_classes, embedding_dim, paper_embedding_filename, seq_dim = 0, max_length = 512, S = 4):
+    def __init__(self, num_classes, embedding_dim, seq_dim = 0, max_length = 512, S = 4):
         '''
         Initialize citation-awared Bert model for context-based citation recommendation.
 
@@ -50,7 +50,6 @@ class CitationBert(nn.Module):
         ----------
         num_classes: int, the number of categories;
         embedding_dim: int, the dimensions of embeddings;
-        paper_embedding_filename: str, the filename of the embedding paper;
         seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result;
         max_length: int, the max length of tokens (enable padding / truncation);
         S: int, optional, default: 4, the hyper-parameter of cosine similarity softmax,
@@ -60,7 +59,21 @@ class CitationBert(nn.Module):
         self.bert = Bert(seq_dim, embedding_dim, max_length = max_length)
         self.embedding_dim = embedding_dim
         self.num_classes = num_classes
+        self.paper_embeddings = None
+        self.softmax = nn.Softmax(dim = 1)
         self.S = S
+    
+    def set_paper_embeddings(self, filename, device = 'cpu'):
+        '''
+        Initialize the paper embeddings from file.
+
+        Parameters
+        ----------
+        filename: str, the .npy file which contains the paper embeddings;
+        device: str, optional, default: 'cpu', the device on which the model is located in.
+        '''
+        self.paper_embeddings = torch.from_numpy(np.load(filename)).to(device).transpose(1, 0)
+        assert self.paper_embeddings.shape == (self.embedding_dim, self.num_classes)
 
     def convert_tokens(self, context):
         return self.bert.convert_tokens(context)
@@ -68,11 +81,15 @@ class CitationBert(nn.Module):
     def convert_tokens(self, left_context, right_context):
         return self.bert.convert_tokens(left_context, right_context)
     
-    def forward(self, tokens, paper_embeddings):
-        batch_size = tokens.shape[0]
+    def forward(self, tokens):
+        if self.paper_embeddings is None:
+            raise AttributeError('Paper embeddings not initialized, please call "set_paper_embeddings" to initialize the paper embeddings.')
         context_embeddings = self.bert(tokens)
-        sim = F.cosine_similarity(paper_embeddings.repeat(batch_size, 1, 1), context_embeddings, dim = 1)
-        return self.S * sim
+        batch_size = context_embeddings.shape[0]
+        # Paper embeddings: embedding_dim * papers -> batch_size * embedding_dim * papers
+        # Context embedding: batch_size * embedding_dim -> batch_size * embedding_dim * papers
+        sim = self.S * F.cosine_similarity(self.paper_embeddings.reshape(1, self.embedding_dim, self.num_classes).repeat(batch_size, 1, 1), context_embeddings.reshape(batch_size, self.embedding_dim, 1).repeat(1, 1, self.num_classes), dim = 1)
+        return sim, self.softmax(sim)
 
 
 class SpecterVGAE(nn.Module):
