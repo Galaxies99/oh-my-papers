@@ -1,16 +1,8 @@
-import os
-import os.path as osp
-import pandas as pd
-import numpy as np
-from tqdm import tqdm
 import torch
 import random
-import tarfile
-import shutil
 from torch.utils.data import Dataset
 from utils.preprocessing import split_process_dataset, construct_graph
 
-# pd.options.mode.chained_assignment = None
 
 class PapersDataset(Dataset):
     '''
@@ -83,7 +75,7 @@ def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
         src, tar = edge[0], edge[1]
         edge_dict[(src, tar)] = True
         edge_dict[(tar, src)] = True
-    for i in tqdm(range(len(test_pos_edge_list))):
+    for _ in range(len(test_pos_edge_list)):
         valid_sample = False
         while valid_sample == False:
             src = random.randint(0, node_num - 1)
