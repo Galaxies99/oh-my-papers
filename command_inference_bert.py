@@ -82,7 +82,7 @@ def get_paper_info(paper_info, res_ids):
         res_item['result'] = []
         for id in res:
             res_item['result'].append(paper_info[id])
-        res_dict['inference'].append(res_item['result'])
+        res_dict['inference'].append(res_item)
     return res_dict
 
 
