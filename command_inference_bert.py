@@ -111,7 +111,7 @@ def inference(input_file, output_file):
             res_softmax = _inference_lr_context(item['left_context'], item['right_context'])
         else:
             raise KeyError('Neither "context" nor both "left_context" and "right_context" is specified in the json input.')
-        _, top_K_ids = torch.topk(res_softmax, k=self.K, largest=True, sorted=True)
+        _, top_K_ids = torch.topk(res_softmax, k = K, largest = True, sorted = True)
         top_K_ids = top_K_ids[0].detach().cpu().tolist()
         res_ids.append(top_K_ids)
     res_dict = get_paper_info(paper_info, res_ids)

@@ -42,7 +42,7 @@ class CitationBert(nn.Module):
     '''
     Citation-awared Bert model for context-based citation recommendation.
     '''
-    def __init__(self, num_classes, embedding_dim, seq_dim = 0, max_length = 512, S = 4):
+    def __init__(self, num_classes, embedding_dim, paper_embedding_filename, seq_dim = 0, max_length = 512, S = 4):
         '''
         Initialize citation-awared Bert model for context-based citation recommendation.
 
@@ -50,6 +50,7 @@ class CitationBert(nn.Module):
         ----------
         num_classes: int, the number of categories;
         embedding_dim: int, the dimensions of embeddings;
+        paper_embedding_filename: str, the filename of the embedding paper;
         seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result;
         max_length: int, the max length of tokens (enable padding / truncation);
         S: int, optional, default: 4, the hyper-parameter of cosine similarity softmax,
@@ -70,7 +71,6 @@ class CitationBert(nn.Module):
     def forward(self, tokens, paper_embeddings):
         batch_size = tokens.shape[0]
         context_embeddings = self.bert(tokens)
-        assert paper_embeddings.shape == torch.size([self.embedding_dim, self.num_classes])
         sim = F.cosine_similarity(paper_embeddings.repeat(batch_size, 1, 1), context_embeddings, dim = 1)
         return self.S * sim
 

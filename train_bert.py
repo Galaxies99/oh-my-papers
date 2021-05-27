@@ -11,6 +11,7 @@ from models.models import SimpleBert
 from utils.criterion import CrossEntropyLoss
 from utils.metrics import ResultRecorder
 
+
 logging.setLoggerClass(ColoredLogger)
 logger = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ CFG_FILE = FLAGS.cfg
 with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
     
-MAX_EPOCH = cfg_dict.get('max_epoch', 500)
+MAX_EPOCH = cfg_dict.get('max_epoch', 30)
 MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
