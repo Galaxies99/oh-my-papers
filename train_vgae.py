@@ -93,7 +93,7 @@ def train(train_edge_list, test_pos_edge_list, test_neg_edge_list):
         cur_epoch = epoch
         loss = train_one_epoch(train_edge_list)
         auc, ap = test_one_epoch(train_edge_list, test_pos_edge_list, test_neg_edge_list)
-        logger.info('Epoch: {:03d}, Loss: {:.4f}, AUC: {:.4f}, AP: {:.4f}'.format(epoch + 1, loss, auc, ap))
+        logger.info('Epoch: {}/{}, Loss: {:.4f}, AUC: {:.4f}, AP: {:.4f}'.format(epoch + 1, MAX_EPOCH, loss, auc, ap))
         if auc > max_auc:
             max_auc = auc
             if MULTIGPU is False:

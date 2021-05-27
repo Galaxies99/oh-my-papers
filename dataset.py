@@ -78,12 +78,17 @@ def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
     train_edge_list = edge_list[:train_edge_num]
     test_pos_edge_list = edge_list[train_edge_num:]
     test_neg_edge_list = []
+    edge_dict = {}
+    for edge in edge_list:
+        src, tar = edge[0], edge[1]
+        edge_dict[(src, tar)] = True
+        edge_dict[(tar, src)] = True
     for i in tqdm(range(len(test_pos_edge_list))):
         valid_sample = False
         while valid_sample == False:
             src = random.randint(0, node_num - 1)
             tar = random.randint(0, node_num - 1)
-            if src != tar and [src, tar] not in edge_list and [tar, src] not in edge_list:
+            if src != tar and edge_dict.get((src, tar), False) == False:
                 test_neg_edge_list.append([src, tar])
                 valid_sample = True    
     return edge_list, train_edge_list, test_pos_edge_list, test_neg_edge_list, node_info
