@@ -29,13 +29,11 @@ with open(CFG_FILE, 'r') as cfg_file:
 if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
     os.makedirs(os.path.dirname(OUTPUT_FILE))
     
-EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
 FREQUENCY = cfg_dict.get('frequency', 5)
-RECALL_K = cfg_dict.get('recall_K', [5, 10, 30, 50, 80])
 K = cfg_dict.get('K', 10)
 STATS_DIR = cfg_dict.get('stats_dir', os.path.join('stats', 'bert'))
 DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))
@@ -131,5 +129,3 @@ def inference(input_file, output_file):
 if __name__ == '__main__':
     res_ids = inference(INPUT_FILE, OUTPUT_FILE)
     print(res_ids)
-    # TODO: res_ids to paper infomation
-    # TODO: create an inference class to call in order to reduce the inference time.
