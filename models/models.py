@@ -88,7 +88,11 @@ class CitationBert(nn.Module):
         batch_size = context_embeddings.shape[0]
         # Paper embeddings: embedding_dim * papers -> batch_size * embedding_dim * papers
         # Context embedding: batch_size * embedding_dim -> batch_size * embedding_dim * papers
-        sim = self.S * F.cosine_similarity(self.paper_embeddings.reshape(1, self.embedding_dim, self.num_classes).repeat(batch_size, 1, 1), context_embeddings.reshape(batch_size, self.embedding_dim, 1).repeat(1, 1, self.num_classes), dim = 1)
+        sim = self.S * F.cosine_similarity(
+            self.paper_embeddings.reshape(1, self.embedding_dim, self.num_classes).repeat(batch_size, 1, 1), 
+            context_embeddings.reshape(batch_size, self.embedding_dim, 1).repeat(1, 1, self.num_classes), 
+            dim = 1
+        )
         return sim, self.softmax(sim)
 
 
