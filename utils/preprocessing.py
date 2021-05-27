@@ -40,7 +40,7 @@ def split_process_dataset(file_path, seq_len, year, frequency=5):
 
     return train_df, test_df, ground_truth, whole_df, graph_node_id_threshold
 
-def construct_graph(whole_df, graph_node_id_threshold):
+def construct_graph(train_df, whole_df, graph_node_id_threshold):
     '''
     Construct the graph based on the input dataframe
 
@@ -62,7 +62,7 @@ def construct_graph(whole_df, graph_node_id_threshold):
     source_abstracts = df['source_abstract'].values.tolist()
     target_abstracts = df['target_abstract'].values.tolist()
 
-    edge_lists = [[src, tar] for src, tar in zip(source_ids, target_ids)]
+    edge_lists = [[src, tar] for src, tar in zip(train_df['SourceID'].values.tolist(), train_df['TargetID'].values.tolist())]
     node_info = [{} for _ in range(graph_node_id_threshold)]
     for i, (src, tar) in enumerate(zip(source_ids, target_ids)):
         if src < graph_node_id_threshold and not node_info[src]:

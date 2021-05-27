@@ -69,8 +69,8 @@ def get_citation_dataset(file_path, seq_len=50, year=2016, frequency=5):
     year: year of boundary (training and test)
     frequency: only articles that are referenced more than 'frequency' are retained
     '''
-    _, _, _, whole_df, graph_node_id_threshold = split_process_dataset(file_path=file_path, seq_len=seq_len, year=year, frequency=frequency)
-    edge_list, node_info = construct_graph(whole_df, graph_node_id_threshold)
+    train_df, _, _, whole_df, graph_node_id_threshold = split_process_dataset(file_path=file_path, seq_len=seq_len, year=year, frequency=frequency)
+    edge_list, node_info = construct_graph(train_df, whole_df, graph_node_id_threshold)
     random.shuffle(edge_list)
     train_edge_num = int(len(edge_list) * 0.9)
     node_num = len(node_info)
