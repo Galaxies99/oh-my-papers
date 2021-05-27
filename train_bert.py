@@ -4,8 +4,8 @@ import torch
 import argparse
 import logging
 from utils.logger import ColoredLogger
-from torch.optim import Adam
-from dataset import get_bert_dataset, get_citation_dataset
+from torch.optim import AdamW
+from dataset import get_bert_dataset
 from torch.utils.data import DataLoader
 from models.models import SimpleBert
 from utils.criterion import CrossEntropyLoss
@@ -24,10 +24,11 @@ with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
     
 MAX_EPOCH = cfg_dict.get('max_epoch', 500)
-EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
+ADAM_WEIGHT_DECAY = cfg_dict.get('adam_weight_decay', 0.01)
+ADAM_EPS = cfg_dict.get('adam_eps', 1e-6)
 LEARNING_RATE = cfg_dict.get('learning_rate', 0.01)
 BATCH_SIZE = cfg_dict.get('batch_size', 4)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
@@ -44,19 +45,18 @@ device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 # Load data & Build dataset
 logger.info('Reading bert dataset & citation dataset ...')
-train_dataset, val_dataset = get_bert_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
-_, _, _, _, node_info = get_citation_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
-node_num = len(node_info)
+train_dataset, val_dataset, paper_info = get_bert_dataset(DATA_PATH, seq_len = SEQ_LEN, year = END_YEAR, frequency = FREQUENCY)
+paper_num = len(paper_info)
 logger.info('Finish reading and dividing into training and testing sets.')
 train_dataloader = DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle = True)
 val_dataloader = DataLoader(val_dataset, batch_size = BATCH_SIZE, shuffle = True)
 
 # Build model from configs
-model = SimpleBert(num_classes = node_num, max_length = MAX_LENGTH)
+model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
 model.to(device)
 
 # Define optimizer
-optimizer = Adam(model.parameters(), betas = (ADAM_BETA1, ADAM_BETA2), lr = LEARNING_RATE)
+optimizer = AdamW(model.parameters(), betas = (ADAM_BETA1, ADAM_BETA2), lr = LEARNING_RATE, weight_decay = ADAM_WEIGHT_DECAY, eps = ADAM_EPS)
 
 # Define criterion
 criterion = CrossEntropyLoss()
@@ -76,7 +76,7 @@ if MULTIGPU is True:
     model = torch.nn.DataParallel(model)
 
 # Result Recorder
-recorder = ResultRecorder(node_num, recall_K = RECALL_K)
+recorder = ResultRecorder(paper_num, include_mAP = False, recall_K = RECALL_K)
 
 
 def train_one_epoch(epoch):
@@ -88,11 +88,11 @@ def train_one_epoch(epoch):
         left_context, right_context, label, _ = data
         tokens = model.convert_tokens(list(left_context), list(right_context)).to(device)
         label = torch.LongTensor(label).to(device)
-        res, res_softmax = model(tokens)
+        res, _ = model(tokens)
         loss = criterion(res, label)
         loss.backward()
         optimizer.step()
-        logger.info('Train batch {}/{}, loss: {:.6f}'.format(idx + 1, total_batches, loss.item()))
+        logger.info('Train epoch {}/{} batch {}/{}, loss: {:.6f}'.format(epoch + 1, MAX_EPOCH, idx + 1, total_batches, loss.item()))
     logger.info('Finish training process in epoch {}.'.format(epoch + 1))
 
 def val_one_epoch(epoch):
@@ -108,27 +108,25 @@ def val_one_epoch(epoch):
         with torch.no_grad():
             res, res_softmax = model(tokens)
             loss = criterion(res, label)
-        logger.info('Val batch {}/{}, loss: {:.6f}'.format(idx + 1, total_batches, loss.item()))
+        logger.info('Val epoch {}/{} batch {}/{}, loss: {:.6f}'.format(epoch + 1, MAX_EPOCH, idx + 1, total_batches, loss.item()))
         recorder.add_record(res_softmax, label, source_label)
     logger.info('Finish training process in epoch {}. Now calculating metrics ...'.format(epoch + 1))
-    mAP = recorder.calc_mAP()
     mRR = recorder.calc_mRR()
     recall_K = recorder.calc_recall_K()
-    logger.info('mAP: {:.6f}'.format(mAP))
     logger.info('MRR: {:.6f}'.format(mRR))
     for i, k in enumerate(RECALL_K):
         logger.info('Recall@{}: {:.6f}'.format(k, recall_K[i]))
-    return mAP
+    return mRR
 
 
 
 def train(start_epoch):
-    best_mAP = 0.0
+    best_mRR = 0.0
     for epoch in range(start_epoch, MAX_EPOCH):
         train_one_epoch(epoch)
-        mAP = val_one_epoch(epoch)
-        if mAP > best_mAP:
-            best_mAP = mAP
+        mRR = val_one_epoch(epoch)
+        if mRR > best_mRR:
+            best_mRR = mRR
             if MULTIGPU is False:
                 save_dict = {
                     'epoch': epoch + 1,
