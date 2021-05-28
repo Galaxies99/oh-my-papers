@@ -18,7 +18,7 @@ class BertInferencer(object):
         MULTIGPU = kwargs.get('multigpu', False)
         MAX_LENGTH = kwargs.get('max_length', 512)
         SEQ_LEN = kwargs.get('seq_len', 50)
-        END_YEAR = kwargs.get('end_year', 2015)
+        END_YEAR = kwargs.get('end_year', 2020)
         FREQUENCY = kwargs.get('frequency', 5)
         self.K = kwargs.get('K', 10)
         STATS_DIR = kwargs.get('stats_dir', os.path.join('stats', 'bert'))

@@ -56,7 +56,11 @@ class CitationBert(nn.Module):
            See: https://www.tutorialexample.com/understand-cosine-similarity-softmax-a-beginner-guide-machine-learning/ for details.
         '''
         super(CitationBert, self).__init__()
-        self.bert = Bert(seq_dim, embedding_dim, max_length = max_length)
+        self.context_bert = Bert(seq_dim, num_classes, max_length = max_length)
+        self.similarity_bert = Bert(seq_dim, embedding_dim, max_length = max_length)
+        self.linear = nn.Linear(embedding_dim + num_classes, num_classes)
+        self.layernorm1 = nn.LayerNorm([num_classes])
+        self.layernorm2 = nn.LayerNorm([num_classes])
         self.embedding_dim = embedding_dim
         self.num_classes = num_classes
         self.paper_embeddings = None
@@ -74,23 +78,26 @@ class CitationBert(nn.Module):
         '''
         self.paper_embeddings = torch.from_numpy(np.load(filename)).to(device).transpose(1, 0)
         assert self.paper_embeddings.shape == (self.embedding_dim, self.num_classes)
+        self.paper_embeddings.requires_grad = False
 
     def convert_tokens(self, context, right_context = None):
-        return self.bert.convert_tokens(context, right_context)
+        return self.context_bert.convert_tokens(context, right_context)
     
     def forward(self, tokens):
         if self.paper_embeddings is None:
             raise AttributeError('Paper embeddings not initialized, please call "set_paper_embeddings" to initialize the paper embeddings.')
-        context_embeddings = self.bert(tokens)
+        context_class = self.context_bert(tokens)
+        context_embeddings = self.similarity_bert(tokens)
         batch_size = context_embeddings.shape[0]
-        # Paper embeddings: embedding_dim * papers -> batch_size * embedding_dim * papers
-        # Context embedding: batch_size * embedding_dim -> batch_size * embedding_dim * papers
-        sim = self.S * F.cosine_similarity(
+        similarity = F.cosine_similarity(
             self.paper_embeddings.reshape(1, self.embedding_dim, self.num_classes),
             context_embeddings.reshape(batch_size, self.embedding_dim, 1),
             dim = 1
         )
-        return sim, self.softmax(sim)
+        similarity = self.layernorm1(similarity)
+        context_class = self.layernorm2(context_class)
+        res = similarity + context_class
+        return res, self.softmax(res)
 
 
 class SpecterVGAE(nn.Module):
