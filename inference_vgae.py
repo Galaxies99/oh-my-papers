@@ -87,7 +87,7 @@ class VGAEInferencer(object):
             node_info = self.node_info[paper_id]
             node_info['id'] = paper_id
             res.append(node_info)
-        return res
+        return {"result": res}
 
 
 if __name__ == '__main__':
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     CFG_FILE = FLAGS.cfg
 
     with open(CFG_FILE, 'r') as cfg_file:
-        cfgs = yaml.load(cfg_file, Loader=yaml.FullLoader)
+        cfgs = yaml.load(cfg_file, Loader = yaml.FullLoader)
 
     inferencer = VGAEInferencer(**cfgs)
 

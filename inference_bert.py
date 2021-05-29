@@ -71,22 +71,18 @@ class BertInferencer(object):
 
 
     def _inference_context(self, context):
-        logger.info('Begin inference ...')
         self.model.eval()
         tokens = self.model.convert_tokens([context]).to(self.device)
         with torch.no_grad():
             _, res_softmax = self.model(tokens)
-        logger.info('Inference successfully finished!')
         return res_softmax
 
 
     def _inference_lr_context(self, left_context, right_context): 
-        logger.info('Begin inference ...')
         self.model.eval()
         tokens = self.model.convert_tokens([left_context], [right_context]).to(self.device)
         with torch.no_grad():
             _, res_softmax = self.model(tokens)
-        logger.info('Inference successfully finished!')
         return res_softmax
 
 
@@ -112,20 +108,18 @@ class BertInferencer(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', default = os.path.join('configs', 'bert.yaml'), help = 'Config File', type = str)
-    parser.add_argument('--input', default = os.path.join('examples', 'bert.json'))
-    parser.add_argument('--output', default = os.path.join('examples', 'bert-res.json'))
+    parser.add_argument('--input', default = os.path.join('examples', 'context.json'))
+    parser.add_argument('--output', default = os.path.join('examples', 'context-res.json'))
     FLAGS = parser.parse_args()
     CFG_FILE = FLAGS.cfg
     INPUT_FILE = FLAGS.input
     OUTPUT_FILE = FLAGS.output
 
-    with open(CFG_FILE, 'r') as cfg_file:
-        cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
-
     if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
         os.makedirs(os.path.dirname(OUTPUT_FILE))
+    
     with open(CFG_FILE, 'r') as cfg_file:
-        cfgs = yaml.load(cfg_file, Loader=yaml.FullLoader)
+        cfgs = yaml.load(cfg_file, Loader = yaml.FullLoader)
 
     inferencer = BertInferencer(**cfgs)
     

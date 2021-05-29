@@ -8,10 +8,11 @@
             "context": "GoogLeNet"
         },
         {
-            "context": "ResNet"
+            "context": "yolo"
         },
         {
-            "context": "Masked R-CNN"
+            "left_context": "AlphaPose",
+            "right_context": "is a well-known state-of-the-art pose estimation framework."
         }
     ]
 }

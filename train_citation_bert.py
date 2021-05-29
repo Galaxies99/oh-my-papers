@@ -22,7 +22,7 @@ FLAGS = parser.parse_args()
 CFG_FILE = FLAGS.cfg
 
 with open(CFG_FILE, 'r') as cfg_file:
-    cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
+    cfg_dict = yaml.load(cfg_file, Loader = yaml.FullLoader)
     
 MAX_EPOCH = cfg_dict.get('max_epoch', 30)
 MULTIGPU = cfg_dict.get('multigpu', False)
