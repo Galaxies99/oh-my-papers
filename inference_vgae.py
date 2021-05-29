@@ -5,6 +5,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import logging
+import torch.nn.functional as F
 from utils.logger import ColoredLogger
 from dataset import get_citation_dataset
 from models.models import SpecterVGAE
@@ -62,17 +63,31 @@ class VGAEInferencer(object):
         
         self.prepare_embeddings()
 
-
     def prepare_embeddings(self):
         self.model.eval()
         edge_list = torch.LongTensor(self.edge_list).to(self.device).transpose(1, 0)
         logger.info('Fetching embedding results ...')
         with torch.no_grad():
-            emb = self.model.encode(edge_list)
+            self.emb = self.model.encode(edge_list)
         logger.info('Results fetched. Now saving to {} ...'.format(self.embedding_file))
-        emb = emb.cpu().detach().numpy()
+        emb = self.emb.cpu().detach().numpy()
         np.save(self.embedding_file, emb)
         logger.info('File saved successfully.')
+
+    def find_topk(self, node_info, k = 10):
+        id = node_info['id']
+        node_emb = self.emb[id]
+        similarity = F.cosine_similarity(node_emb.reshape(1, -1), self.emb, dim = 1)
+        _, topkid = torch.topk(similarity, k = k + 1, dim = -1, largest = True, sorted = True)
+        topkid = topkid.cpu().detach().numpy()
+        res = []
+        for i, paper_id in enumerate(topkid.tolist()):
+            if i == 0:
+                continue
+            node_info = self.node_info[paper_id]
+            node_info['id'] = paper_id
+            res.append(node_info)
+        return res
 
 
 if __name__ == '__main__':
@@ -86,4 +101,4 @@ if __name__ == '__main__':
 
     inferencer = VGAEInferencer(**cfgs)
 
-    inferencer.prepare_embeddings()
+    print(inferencer.find_topk({'id': 0}))

@@ -69,7 +69,9 @@ class CitationBertInferencer(object):
             res_item = {}
             res_item['result'] = []
             for id in res:
-                res_item['result'].append(self.paper_info[id])
+                paper_info = self.paper_info[id]
+                paper_info['id'] = id
+                res_item['result'].append(paper_info)
             res_dict['inference'].append(res_item)
         return res_dict
 
