@@ -7,3 +7,5 @@ scipy
 argparse
 transformers
 torch-geometric
+fuzzywuzzy
+python-Levenshtein
