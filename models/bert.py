@@ -7,7 +7,7 @@ from transformers import AutoTokenizer, AutoModel
 
 
 class Bert(nn.Module):
-    def __init__(self, seq_dim = 0, feature_dim = -1, max_length = 512):
+    def __init__(self, seq_dim = 0, feature_dim = -1, max_length = 512, cased = False):
         super(Bert, self).__init__()
         
         if seq_dim not in [-1, 0]:
@@ -19,8 +19,12 @@ class Bert(nn.Module):
 
         bert_hidden = 768
         
-        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
-        self.bert_model = AutoModel.from_pretrained("bert-base-cased")
+        if cased:
+            self.tokenizer = AutoTokenizer.from_pretrained("bert-base-cased")
+            self.bert_model = AutoModel.from_pretrained("bert-base-cased")
+        else:
+            self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+            self.bert_model = AutoModel.from_pretrained("bert-base-uncased")
         self.seq_dim = seq_dim
         self.max_length = max_length
 
@@ -29,13 +33,16 @@ class Bert(nn.Module):
         else:
             self.linear = nn.Linear(bert_hidden, feature_dim)
 
+    def tokenize(self, contexts):
+        return self.tokenizer(contexts, padding = True, truncation = True, return_tensors = 'pt', max_length = self.max_length)
+
     def convert_tokens(self, context, right_context = None):
         if right_context is None:
             return self.tokenizer(context, return_tensors = 'pt')
         else:
             assert len(context) == len(right_context)
             context_combined = [(context[i] + self.tokenizer.sep_token + right_context[i]) for i in range(len(context))]
-            return self.tokenizer(context_combined, padding = True, truncation = True, return_tensors = 'pt', max_length = self.max_length)
+            return self.tokenize(context_combined)
 
     def forward(self, tokens):
         res = self.bert_model(**tokens).last_hidden_state[:, self.seq_dim, :]
@@ -54,9 +61,19 @@ class Specter(nn.Module):
         self.specter = AutoModel.from_pretrained("allenai/specter")
         self.max_length = max_length
     
-    def convert_tokens(self, papers):
-        title_abs = [(paper.get('title', '') + self.tokenizer.sep_token + paper.get('abstract', '')) for paper in papers]
-        return self.tokenizer(title_abs, padding = True, truncation = True, return_tensors = "pt", max_length = self.max_length)
+    def tokenize(self, contexts):
+        return self.tokenizer(contexts, padding = True, truncation = True, return_tensors = "pt", max_length = self.max_length)
+
+    def convert_tokens(self, papers, title_abs = True):
+        if title_abs:
+            res = [(paper.get('title', '') + self.tokenizer.sep_token + paper.get('abstract', '')) for paper in papers]
+        else:
+            context, right_context = papers
+            if right_context is None:
+                res = context
+            else:
+                res = [(context[i] + self.tokenizer.sep_token + right_context[i]) for i in range(len(context))]
+        return self.tokenize(res)
     
     def forward(self, tokens):
         res = self.specter(**tokens).last_hidden_state[:, 0, :]

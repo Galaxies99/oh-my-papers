@@ -29,6 +29,7 @@ if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
     os.makedirs(os.path.dirname(OUTPUT_FILE))
     
 MULTIGPU = cfg_dict.get('multigpu', False)
+BERT_CASED = cfg_dict.get('bert_cased', False)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
@@ -48,7 +49,7 @@ paper_num = len(paper_info)
 logger.info('Finish reading and dividing into training and testing sets.')
 
 # Build model from configs
-model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
+model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH, cased = BERT_CASED)
 model.to(device)
 
 # Read checkpoints

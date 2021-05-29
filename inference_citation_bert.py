@@ -17,7 +17,8 @@ class CitationBertInferencer(object):
         super(CitationBertInferencer, self).__init__()
         MULTIGPU = kwargs.get('multigpu', False)
         EMBEDDING_DIM = kwargs.get('embedding_dim', 768)
-        COSINE_SOFTMAX_S = kwargs.get('cosine_softmax_S', 4)
+        COSINE_SOFTMAX_S = kwargs.get('cosine_softmax_S', 1)
+        BERT_CASED = kwargs.get('bert_cased', False)
         MAX_LENGTH = kwargs.get('max_length', 512)
         SEQ_LEN = kwargs.get('seq_len', 50)
         END_YEAR = kwargs.get('end_year', 2020)
@@ -43,7 +44,7 @@ class CitationBertInferencer(object):
             self.K = self.paper_num
 
         # Build model from configs
-        self.model = CitationBert(num_classes = self.paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S)
+        self.model = CitationBert(num_classes = self.paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S, cased = BERT_CASED)
         self.model.to(self.device)
         self.model.set_paper_embeddings(filename = EMBEDDING_PATH, device = self.device)
 
@@ -75,9 +76,11 @@ class CitationBertInferencer(object):
     def _inference_context(self, context):
         logger.info('Begin inference ...')
         self.model.eval()
-        tokens = self.model.convert_tokens([context]).to(self.device)
+        tokens_bert, tokens_specter = self.model.convert_tokens([context])
+        tokens_bert = tokens_bert.to(self.device)
+        tokens_specter = tokens_specter.to(self.device)
         with torch.no_grad():
-            _, res_softmax = self.model(tokens)
+            _, res_softmax = self.model(tokens_bert, tokens_specter)
         logger.info('Inference successfully finished!')
         return res_softmax
 
@@ -85,9 +88,11 @@ class CitationBertInferencer(object):
     def _inference_lr_context(self, left_context, right_context): 
         logger.info('Begin inference ...')
         self.model.eval()
-        tokens = self.model.convert_tokens([left_context], [right_context]).to(self.device)
+        tokens_bert, tokens_specter = self.model.convert_tokens([left_context], [right_context])
+        tokens_bert = tokens_bert.to(self.device)
+        tokens_specter = tokens_specter.to(self.device)
         with torch.no_grad():
-            _, res_softmax = self.model(tokens)
+            _, res_softmax = self.model(tokens_bert, tokens_specter)
         logger.info('Inference successfully finished!')
         return res_softmax
 
@@ -112,7 +117,7 @@ class CitationBertInferencer(object):
 
 
 if __name__ == '__main__':
-    with open('configs/citation_bert_vgae.yaml', 'r') as cfg_file:
+    with open('configs/citation_bert.yaml', 'r') as cfg_file:
         cfgs = yaml.load(cfg_file, Loader=yaml.FullLoader)
     inferencer = CitationBertInferencer(**cfgs)
     with open('examples/citation_bert.json', 'r') as f:

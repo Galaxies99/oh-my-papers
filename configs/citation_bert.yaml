@@ -1,7 +1,8 @@
 max_epoch: 30
 multigpu: False
 embedding_dim: 768
-cosine_softmax_S: 4
+cosine_softmax_S: 1
+bert_cased: False
 adam_beta1: 0.9
 adam_beta2: 0.999
 adam_weight_decay: 0.01

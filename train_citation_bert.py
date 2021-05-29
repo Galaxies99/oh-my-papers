@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Parse Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--cfg', default = os.path.join('configs', 'citation_bert_vgae.yaml'), help = 'Config File', type = str)
+parser.add_argument('--cfg', default = os.path.join('configs', 'citation_bert.yaml'), help = 'Config File', type = str)
 FLAGS = parser.parse_args()
 CFG_FILE = FLAGS.cfg
 
@@ -27,7 +27,8 @@ with open(CFG_FILE, 'r') as cfg_file:
 MAX_EPOCH = cfg_dict.get('max_epoch', 30)
 MULTIGPU = cfg_dict.get('multigpu', False)
 EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
-COSINE_SOFTMAX_S = cfg_dict.get('cosine_softmax_S', 4)
+COSINE_SOFTMAX_S = cfg_dict.get('cosine_softmax_S', 1)
+BERT_CASED = cfg_dict.get('bert_cased', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
 ADAM_WEIGHT_DECAY = cfg_dict.get('adam_weight_decay', 0.01)
@@ -58,7 +59,7 @@ train_dataloader = DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle = 
 val_dataloader = DataLoader(val_dataset, batch_size = BATCH_SIZE, shuffle = True)
 
 # Build model from configs
-model = CitationBert(num_classes = paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S)
+model = CitationBert(num_classes = paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S, cased = BERT_CASED)
 model.to(device)
 model.set_paper_embeddings(filename = EMBEDDING_PATH, device = device)
 
@@ -93,9 +94,11 @@ def train_one_epoch(epoch):
     for idx, data in enumerate(train_dataloader):
         optimizer.zero_grad()
         left_context, right_context, label, _ = data
-        tokens = model.convert_tokens(list(left_context), list(right_context)).to(device)
+        tokens_bert, tokens_specter = model.convert_tokens(list(left_context), list(right_context))
+        tokens_bert = tokens_bert.to(device)
+        tokens_specter = tokens_specter.to(device)
         label = torch.LongTensor(label).to(device)
-        res, _ = model(tokens)
+        res, _ = model(tokens_bert, tokens_specter)
         loss = criterion(res, label)
         loss.backward()
         optimizer.step()
@@ -110,10 +113,12 @@ def val_one_epoch(epoch):
     for idx, data in enumerate(val_dataloader):
         optimizer.zero_grad()
         left_context, right_context, label, source_label = data
-        tokens = model.convert_tokens(list(left_context), list(right_context)).to(device)
+        tokens_bert, tokens_specter = model.convert_tokens(list(left_context), list(right_context))
+        tokens_bert = tokens_bert.to(device)
+        tokens_specter = tokens_specter.to(device)
         label = torch.LongTensor(label).to(device)
         with torch.no_grad():
-            res, res_softmax = model(tokens)
+            res, res_softmax = model(tokens_bert, tokens_specter)
             loss = criterion(res, label)
         logger.info('Val epoch {}/{} batch {}/{}, loss: {:.6f}'.format(epoch + 1, MAX_EPOCH, idx + 1, total_batches, loss.item()))
         recorder.add_record(res_softmax, label, source_label)

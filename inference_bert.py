@@ -16,6 +16,7 @@ class BertInferencer(object):
     def __init__(self, **kwargs):
         super(BertInferencer, self).__init__()
         MULTIGPU = kwargs.get('multigpu', False)
+        BERT_CASED = kwargs.get('bert_cased', False)
         MAX_LENGTH = kwargs.get('max_length', 512)
         SEQ_LEN = kwargs.get('seq_len', 50)
         END_YEAR = kwargs.get('end_year', 2020)
@@ -38,7 +39,7 @@ class BertInferencer(object):
             self.K = self.paper_num
 
         # Build model from configs
-        self.model = SimpleBert(num_classes = self.paper_num, max_length = MAX_LENGTH)
+        self.model = SimpleBert(num_classes = self.paper_num, max_length = MAX_LENGTH, cased = BERT_CASED)
         self.model.to(self.device)
 
         # Read checkpoints

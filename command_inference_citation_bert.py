@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 # Parse Arguments
 parser = argparse.ArgumentParser()
-parser.add_argument('--cfg', default = os.path.join('configs', 'citation_bert_vgae.yaml'), help = 'Config File', type = str)
+parser.add_argument('--cfg', default = os.path.join('configs', 'citation_bert.yaml'), help = 'Config File', type = str)
 parser.add_argument('--input', default = os.path.join('examples', 'citation_bert.json'))
 parser.add_argument('--output', default = os.path.join('examples', 'citation_bert-res.json'))
 FLAGS = parser.parse_args()
@@ -30,7 +30,8 @@ if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
 
 MULTIGPU = cfg_dict.get('multigpu', False)
 EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
-COSINE_SOFTMAX_S = cfg_dict.get('cosine_softmax_S', 4)
+COSINE_SOFTMAX_S = cfg_dict.get('cosine_softmax_S', 1)
+BERT_CASED = cfg_dict.get('bert_cased', False)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
 END_YEAR = cfg_dict.get('end_year', 2015)
@@ -53,7 +54,7 @@ paper_num = len(paper_info)
 logger.info('Finish reading and dividing into training and testing sets.')
 
 # Build model from configs
-model = CitationBert(num_classes = paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S)
+model = CitationBert(num_classes = paper_num, embedding_dim = EMBEDDING_DIM, max_length = MAX_LENGTH, S = COSINE_SOFTMAX_S, cased = BERT_CASED)
 model.to(device)
 model.set_paper_embeddings(filename = EMBEDDING_PATH, device = device)
 
@@ -85,9 +86,11 @@ def get_paper_info(paper_info, res_ids):
 def _inference_context(context):
     logger.info('Begin inference ...')
     model.eval()
-    tokens = model.convert_tokens([context]).to(device)
+    tokens_bert, tokens_specter = model.convert_tokens([context])
+    tokens_bert = tokens_bert.to(device)
+    tokens_specter = tokens_specter.to(device)
     with torch.no_grad():
-        _, res_softmax = model(tokens)
+        _, res_softmax = model(tokens_bert, tokens_specter)
     logger.info('Inference successfully finished!')
     return res_softmax
 
@@ -95,9 +98,11 @@ def _inference_context(context):
 def _inference_lr_context(left_context, right_context): 
     logger.info('Begin inference ...')
     model.eval()
-    tokens = model.convert_tokens([left_context], [right_context]).to(device)
+    tokens_bert, tokens_specter = model.convert_tokens([left_context], [right_context])
+    tokens_bert = tokens_bert.to(device)
+    tokens_specter = tokens_specter.to(device)
     with torch.no_grad():
-        _, res_softmax = model(tokens)
+        _, res_softmax = model(tokens_bert, tokens_specter)
     logger.info('Inference successfully finished!')
     return res_softmax
 

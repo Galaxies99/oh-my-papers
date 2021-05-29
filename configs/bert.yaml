@@ -1,4 +1,5 @@
 max_epoch: 30
+bert_cased: False
 multigpu: False
 adam_beta1: 0.9
 adam_beta2: 0.999

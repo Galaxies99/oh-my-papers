@@ -17,17 +17,18 @@ class SimpleBert(nn.Module):
     '''
     Simple Bert model for context-based citation recommendation.
     '''
-    def __init__(self, num_classes, seq_dim = 0, max_length = 512):
+    def __init__(self, num_classes, seq_dim = 0, max_length = 512, cased = False):
         '''
         Initialize simple Bert model for context-based citation recommendation.
 
         Parameters
         ----------
         num_classes: int, the number of categories;
-        seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result.
+        seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result;
+        cased: bool, optional, default: False, whether use the cased bert pretrained model, or uncased bert pretrained model.
         '''
         super(SimpleBert, self).__init__()
-        self.bert = Bert(seq_dim, num_classes, max_length = max_length)
+        self.bert = Bert(seq_dim, num_classes, max_length = max_length, cased = cased)
         self.softmax = nn.Softmax(dim = 1)
 
     def convert_tokens(self, context, right_context = None):
@@ -42,7 +43,7 @@ class CitationBert(nn.Module):
     '''
     Citation-awared Bert model for context-based citation recommendation.
     '''
-    def __init__(self, num_classes, embedding_dim, seq_dim = 0, max_length = 512, S = 4):
+    def __init__(self, num_classes, embedding_dim, seq_dim = 0, max_length = 512, S = 1, cased = False):
         '''
         Initialize citation-awared Bert model for context-based citation recommendation.
 
@@ -52,13 +53,13 @@ class CitationBert(nn.Module):
         embedding_dim: int, the dimensions of embeddings;
         seq_dim: int in [-1, 0], optional, default: 0, the chosen dim of the bert result;
         max_length: int, the max length of tokens (enable padding / truncation);
-        S: int, optional, default: 4, the hyper-parameter of cosine similarity softmax,
-           See: https://www.tutorialexample.com/understand-cosine-similarity-softmax-a-beginner-guide-machine-learning/ for details.
+        S: int, optional, default: 1, the hyper-parameter of cosine similarity softmax,
+           See: https://www.tutorialexample.com/understand-cosine-similarity-softmax-a-beginner-guide-machine-learning/ for details;
+        cased: bool, optional, default: False, whether use the cased bert pretrained model, or uncased bert pretrained model.
         '''
         super(CitationBert, self).__init__()
-        self.context_bert = Bert(seq_dim, num_classes, max_length = max_length)
-        self.similarity_bert = Bert(seq_dim, embedding_dim, max_length = max_length)
-        self.linear = nn.Linear(embedding_dim + num_classes, num_classes)
+        self.bert = Bert(seq_dim, num_classes, max_length = max_length, cased = cased)
+        self.specter = Specter(max_length = max_length)
         self.layernorm1 = nn.LayerNorm([num_classes])
         self.layernorm2 = nn.LayerNorm([num_classes])
         self.embedding_dim = embedding_dim
@@ -81,13 +82,13 @@ class CitationBert(nn.Module):
         self.paper_embeddings.requires_grad = False
 
     def convert_tokens(self, context, right_context = None):
-        return self.context_bert.convert_tokens(context, right_context)
+        return self.bert.convert_tokens(context, right_context), self.specter.convert_tokens((context, right_context), title_abs = False)
     
-    def forward(self, tokens):
+    def forward(self, tokens_bert, tokens_specter):
         if self.paper_embeddings is None:
             raise AttributeError('Paper embeddings not initialized, please call "set_paper_embeddings" to initialize the paper embeddings.')
-        context_class = self.context_bert(tokens)
-        context_embeddings = self.similarity_bert(tokens)
+        context_class = self.bert(tokens_bert)
+        context_embeddings = self.specter(tokens_specter)
         batch_size = context_embeddings.shape[0]
         similarity = F.cosine_similarity(
             self.paper_embeddings.reshape(1, self.embedding_dim, self.num_classes),
@@ -96,7 +97,7 @@ class CitationBert(nn.Module):
         )
         similarity = self.layernorm1(similarity)
         context_class = self.layernorm2(context_class)
-        res = similarity + context_class
+        res = self.S * similarity + context_class
         return res, self.softmax(res)
 
 

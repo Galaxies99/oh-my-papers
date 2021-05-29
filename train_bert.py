@@ -25,6 +25,7 @@ with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
     
 MAX_EPOCH = cfg_dict.get('max_epoch', 30)
+BERT_CASED = cfg_dict.get('bert_cased', False)
 MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
 ADAM_BETA2 = cfg_dict.get('adam_beta2', 0.999)
@@ -53,7 +54,7 @@ train_dataloader = DataLoader(train_dataset, batch_size = BATCH_SIZE, shuffle = 
 val_dataloader = DataLoader(val_dataset, batch_size = BATCH_SIZE, shuffle = True)
 
 # Build model from configs
-model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH)
+model = SimpleBert(num_classes = paper_num, max_length = MAX_LENGTH, cased = BERT_CASED)
 model.to(device)
 
 # Define optimizer
