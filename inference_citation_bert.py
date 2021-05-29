@@ -3,6 +3,7 @@ import json
 import yaml
 import torch
 import logging
+import argparse
 from utils.logger import ColoredLogger
 from dataset import get_bert_dataset
 from models.models import CitationBert
@@ -117,12 +118,31 @@ class CitationBertInferencer(object):
 
 
 if __name__ == '__main__':
-    with open('configs/citation_bert.yaml', 'r') as cfg_file:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--cfg', default = os.path.join('configs', 'citation_bert.yaml'), help = 'Config File', type = str)
+    parser.add_argument('--input', default = os.path.join('examples', 'citation_bert.json'))
+    parser.add_argument('--output', default = os.path.join('examples', 'citation_bert-res.json'))
+    FLAGS = parser.parse_args()
+    CFG_FILE = FLAGS.cfg
+    INPUT_FILE = FLAGS.input
+    OUTPUT_FILE = FLAGS.output
+
+    with open(CFG_FILE, 'r') as cfg_file:
+        cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
+
+    if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
+        os.makedirs(os.path.dirname(OUTPUT_FILE))
+
+    with open(CFG_FILE, 'r') as cfg_file:
         cfgs = yaml.load(cfg_file, Loader=yaml.FullLoader)
+
     inferencer = CitationBertInferencer(**cfgs)
-    with open('examples/citation_bert.json', 'r') as f:
+    
+    with open(INPUT_FILE, 'r') as f:
         input_dict = json.load(f)
+    
     output_dict = inferencer.inference(input_dict)
-    with open('examples/citation_bert-res.json', 'w') as f:
+    
+    with open(OUTPUT_FILE, 'w') as f:
         json.dump(output_dict, f)
     
