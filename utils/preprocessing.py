@@ -61,6 +61,12 @@ def construct_graph(train_df, whole_df, graph_node_id_threshold):
     target_titles = df['target_title'].values.tolist()
     source_abstracts = df['source_abstract'].values.tolist()
     target_abstracts = df['target_abstract'].values.tolist()
+    source_years = df['source_year'].values.tolist()
+    target_years = df['target_year'].values.tolist()
+    source_venues = df['source_venue'].values.tolist()
+    target_venues = df['target_venue'].values.tolist()
+    source_authors = df['source_author'].values.tolist()
+    target_authors = df['target_author'].values.tolist()
 
     edge_lists = [[src, tar] for src, tar in zip(train_df['SourceID'].values.tolist(), train_df['TargetID'].values.tolist())]
     node_info = [{} for _ in range(graph_node_id_threshold)]
@@ -68,9 +74,15 @@ def construct_graph(train_df, whole_df, graph_node_id_threshold):
         if src < graph_node_id_threshold and not node_info[src]:
             node_info[src]['title'] = source_titles[i]
             node_info[src]['abstract'] = source_abstracts[i]
+            node_info[src]['venue'] = source_venues[i]
+            node_info[src]['author'] = source_authors[i]
+            node_info[src]['year'] = source_years[i]
         if tar < graph_node_id_threshold and not node_info[tar]:
             node_info[tar]['title'] = target_titles[i]
             node_info[tar]['abstract'] = target_abstracts[i]
+            node_info[tar]['venue'] = target_venues[i]
+            node_info[tar]['author'] = target_authors[i]
+            node_info[tar]['year'] = target_years[i]
 
     return edge_lists, node_info
 
@@ -193,5 +205,5 @@ if __name__ == "__main__":
     train_df, test_df, ground_truth, whole_df, graph_node_id_threshold = split_process_dataset(file_path='../data/citation.csv', seq_len=50, year=2015, frequency=5)
 
     # construct graph
-    edge_list, node_info = construct_graph(whole_df, graph_node_id_threshold)
+    edge_list, node_info = construct_graph(train_df, whole_df, graph_node_id_threshold)
 
