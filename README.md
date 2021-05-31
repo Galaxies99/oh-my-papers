@@ -114,4 +114,3 @@ Please see [docs/inference.md](docs/inference.md) for more details about the inf
 3. Specter: [official repo](https://github.com/allenai/specter);
 4. Yang L, Zheng Y, Cai X, et al. A LSTM based model for personalized context-aware citation recommendation[J]. IEEE access, 2018, 6: 59618-59627.
 5. Jeong C, Jang S, Park E, et al. A context-aware citation recommendation model with BERT and graph convolutional networks[J]. Scientometrics, 2020, 124(3): 1907-1922.
-
