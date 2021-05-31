@@ -1,5 +1,6 @@
 import os
 import yaml
+import json
 import torch
 import argparse
 import pandas as pd
@@ -93,12 +94,25 @@ class VGAEInferencer(object):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', default = os.path.join('configs', 'vgae.yaml'), help = 'Config File', type = str)
+    parser.add_argument('--input', default = os.path.join('examples', 'relation.json'))
+    parser.add_argument('--output', default = os.path.join('examples', 'relation-res.json'))
     FLAGS = parser.parse_args()
     CFG_FILE = FLAGS.cfg
+    INPUT_FILE = FLAGS.input
+    OUTPUT_FILE = FLAGS.output
+
+    if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
+        os.makedirs(os.path.dirname(OUTPUT_FILE))
 
     with open(CFG_FILE, 'r') as cfg_file:
         cfgs = yaml.load(cfg_file, Loader = yaml.FullLoader)
 
     inferencer = VGAEInferencer(**cfgs)
+    
+    with open(INPUT_FILE, 'r') as f:
+        input_dict = json.load(f)
 
-    print(inferencer.find_topk({'id': 0}))
+    output_dict = inferencer.find_topk(input_dict)
+
+    with open(OUTPUT_FILE, 'w') as f:
+        json.dump(output_dict, f)
