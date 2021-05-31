@@ -1,4 +1,7 @@
+![](imgs/oh-my-papers.png)
 # Oh-My-Papers
+
+Oh-My-Papers is a hybrid context-aware citation recommendation system.
 
 ## Requirements
 
