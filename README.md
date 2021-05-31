@@ -24,7 +24,7 @@ You can download full pretrained models at [Baidu Netdisk](https://pan.baidu.com
 
 Our repository includes three models:
 
-- **Models 1**: VGAE model for related paper recommendation (ours).
+- **Model 1**: VGAE model for related paper recommendation (ours).
 - **Model 2**: Bert model for context-aware citation recommendation (baseline);
 - **Model 3**: Citation-bert model for context-aware citation recommendation (ours).
 
@@ -56,8 +56,6 @@ where `[Configuration Path]` is the path to your configuration file.
 
 **Note**. If you want to train model 3, please train the model 1 first to generate the paper embeddings.
 
-Please see [docs/training.md](docs/training.md) for more details about the inference and the file format.
-
 ## Evaluation
 
 If you want to evaluate the performance of our models, especially model 2 and model 3 (since model 1 almost has nothing to evaluate). For evaluation, please make sure that either you have downloaded pretrained models and put it in the correct place, or you have trained the models by yourselves.
@@ -73,8 +71,6 @@ python eval_citation_bert.py --cfg [Configuration Path]
 ```
 
 where `[Configuration Path]` is the path to your configuration file.
-
-Please see [docs/evaluation.md](docs/evaluation.md) for more details about the inference and the file format.
 
 ## Inference
 
