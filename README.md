@@ -98,6 +98,10 @@ where `[Configuration Path]` is the path to your configuration file, and `[Input
 
 Please see [docs/inference.md](docs/inference.md) for more details about the inference and the file format.
 
+## Front-end Website
+
+We implement a simple front-end website, see [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
+
 ## Citations
 
 ```bibtex
