@@ -1,7 +1,6 @@
 ![](imgs/oh-my-papers.png)
-# Oh-My-Papers
 
-Oh-My-Papers is a hybrid context-aware citation recommendation system.
+# Oh-My-Papers: a Hybrid Context-aware Citation Recommendation System
 
 ## Requirements
 
@@ -15,7 +14,7 @@ You may need to manually install `pytorch-geometric` from its [official repo](ht
 
 ## Data Preparation
 
-You can download full data at [Baidu Netdisk](https://pan.baidu.com/s/1N4zsWhieluiT3sC0FBASPw) (Extract Code: sc88) and [GoogleDrive](https://drive.google.com/drive/folders/1VJ2vK2OBEvTg_xaXfu8rSZHA-kl0vRS-?usp=sharing). We also prepare a tiny dataset, which is a subset of the full dataset. If you want to prepare the data yourself, please see [docs/data_preparation.md](docs/data_preparation.md) for details.
+You can download full data at [Baidu Netdisk](https://pan.baidu.com/s/1N4zsWhieluiT3sC0FBASPw) (Extract Code: sc88) and [Google Drive](https://drive.google.com/drive/folders/1VJ2vK2OBEvTg_xaXfu8rSZHA-kl0vRS-?usp=sharing), and you need to put it into `data` folder. We also prepare a tiny dataset, which is a subset of the full dataset. If you want to prepare the data yourself, please see [docs/data_preparation.md](docs/data_preparation.md) for details.
 
 ## Pretrained Models
 
@@ -25,11 +24,11 @@ You can download full pretrained models at [Baidu Netdisk](https://pan.baidu.com
 
 Our repository includes three models:
 
-- **Models 1**: Vgae model for related paper recommendation (ours).
+- **Models 1**: VGAE model for related paper recommendation (ours).
 - **Model 2**: Bert model for context-aware citation recommendation (baseline);
 - **Model 3**: Citation-bert model for context-aware citation recommendation (ours).
 
-Please see [docs/models.md](docs/configurations.md) for details.
+Please see [docs/models.md](docs/models.md) for details.
 
 ## Configurations
 

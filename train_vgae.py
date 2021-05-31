@@ -22,7 +22,7 @@ CFG_FILE = FLAGS.cfg
 with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader = yaml.FullLoader)
     
-MAX_EPOCH = cfg_dict.get('max_epoch', 500)
+MAX_EPOCH = cfg_dict.get('max_epoch', 2000)
 EMBEDDING_DIM = cfg_dict.get('embedding_dim', 768)
 MULTIGPU = cfg_dict.get('multigpu', False)
 ADAM_BETA1 = cfg_dict.get('adam_beta1', 0.9)
@@ -31,7 +31,7 @@ LEARNING_RATE = cfg_dict.get('learning_rate', 0.01)
 SPECTER_BATCH_SIZE = cfg_dict.get('specter_batch_size', 4)
 MAX_LENGTH = cfg_dict.get('max_length', 512)
 SEQ_LEN = cfg_dict.get('seq_len', 50)
-END_YEAR = cfg_dict.get('end_year', 2015)
+END_YEAR = cfg_dict.get('end_year', 2020)
 FREQUENCY = cfg_dict.get('frequency', 5)
 STATS_DIR = cfg_dict.get('stats_dir', os.path.join('stats', 'vgae'))
 DATA_PATH = cfg_dict.get('data_path', os.path.join('data', 'citation.csv'))

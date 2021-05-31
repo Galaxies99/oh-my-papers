@@ -24,7 +24,7 @@ class VGAEInferencer(object):
         SPECTER_BATCH_SIZE = kwargs.get('specter_batch_size', 4)
         MAX_LENGTH = kwargs.get('max_length', 512)
         SEQ_LEN = kwargs.get('seq_len', 50)
-        END_YEAR = kwargs.get('end_year', 2015)
+        END_YEAR = kwargs.get('end_year', 2020)
         FREQUENCY = kwargs.get('frequency', 5)
         STATS_DIR = kwargs.get('stats_dir', os.path.join('stats', 'vgae'))
         DATA_PATH = kwargs.get('data_path', os.path.join('data', 'citation.csv'))
