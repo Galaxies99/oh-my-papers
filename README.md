@@ -72,6 +72,8 @@ python eval_citation_bert.py --cfg [Configuration Path]
 
 where `[Configuration Path]` is the path to your configuration file.
 
+Please see [docs/evaluation.md](docs/evaluation.md) for more details about the evaluation process.
+
 ## Inference
 
 For inference, we create a class for the inference of each model. Please make sure that either you have downloaded pretrained models and put it in the correct place, or you have trained the models by yourselves.
