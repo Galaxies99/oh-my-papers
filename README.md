@@ -4,11 +4,13 @@
 
 ## Introduction
 
-Current scholar search engine cannot recognize "jargon". For exeample, if you type "resnet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers: a hybrid context-aware citation recommendation system, as well as a scholar search engine.
+Current scholar search engine cannot recognize **"jargon"**, that is, specialized termilogy associated with a particular field or area of activity. For exeample, if you type "ResNet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers, a hybrid context-aware citation recommendation system, as well as a scholar search engine. 
 
-We also create a large dataset recording citation information from papers of CV field in recent years. The dataset is ~10x larger than the current biggest dataset.
+We first point out that, we can learn jargons from academic paper citation information. Since specialists usually use jargons such as "ResNet" in the academic paper writings, academic papers can help us to improve the searching results.
 
-We also implement a simple front-end website, you can see the details from the demo. See [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
+In this work, we also create a large dataset recording citation information from papers of computer vision field in recent years. The dataset is ~10x larger than the biggest dataset from the previous works.
+
+We also implement a simple front-end website, which has three functions: context searching, auto-citation and related paper recommendation. See the details from the demo. See [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
 
 ## Requirements
 
