@@ -4,7 +4,7 @@
 
 ## Introduction
 
-Current scholar search engine cannot recognize **"jargon"**, that is, specialized termilogy associated with a particular field or area of activity. For exeample, if you type "ResNet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers, a hybrid context-aware citation recommendation system, as well as a scholar search engine. 
+Current scholar search engine cannot recognize **"jargon"**, that is, specialized termilogy associated with a particular field or area of activity. For example, if you type "ResNet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers, a hybrid context-aware citation recommendation system, as well as a scholar search engine. 
 
 We first point out that we can learn jargons from academic paper citation information. Since specialists usually use jargons such as "ResNet" in the academic paper writings, and the reference to the corresponding paper usually follows the jargon as illustrated below, citation information (especially citation context) of academic papers can help us to improve the searching results.
 
