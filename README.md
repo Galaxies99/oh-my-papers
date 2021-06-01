@@ -2,6 +2,14 @@
 
 # Oh-My-Papers: a Hybrid Context-aware Citation Recommendation System
 
+## Introduction
+
+Current scholar search engine cannot recognize "jargon". For exeample, if you type "resnet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers: a hybrid context-aware citation recommendation system, as well as a scholar search engine.
+
+We also create a large dataset recording citation information from papers of CV field in recent years. The dataset is ~10x larger than the current biggest dataset.
+
+We also implement a simple front-end website, you can see the details from the demo. See [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
+
 ## Requirements
 
 Execute the following commands to install requirements.
@@ -97,10 +105,6 @@ where `[Configuration Path]` is the path to your configuration file, and `[Input
 **Note**. The input file and output file all has a json format.
 
 Please see [docs/inference.md](docs/inference.md) for more details about the inference and the file format.
-
-## Front-end Website
-
-We implement a simple front-end website, see [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
 
 ## Citations
 
