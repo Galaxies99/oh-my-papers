@@ -12,7 +12,7 @@ We first point out that we can learn jargons from academic paper citation inform
 
 In this work, we also create a large dataset recording citation information from papers of computer vision field in recent years. The dataset is ~10x larger than the biggest dataset from the previous works.
 
-We also implement a simple front-end website, which has three functions: context searching, auto-citation and related paper recommendation. See the details from the demo. See [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
+We also implement a simple front-end website, which has three functions: context searching, auto-citation and related paper recommendation. See the details from the demo repository [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
 
 ## Requirements
 
