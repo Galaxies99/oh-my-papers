@@ -1,10 +1,10 @@
 ![](imgs/oh-my-papers.png)
 
-# Oh-My-Papers: a Hybrid Context-aware Citation Recommendation System
+# Oh-My-Papers: a Hybrid Context-aware Paper Recommendation System
 
 ## Introduction
 
-Current scholar search engine cannot recognize **"jargon"**, that is, specialized termilogy associated with a particular field or area of activity. For example, if you type "ResNet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers, a hybrid context-aware citation recommendation system, as well as a scholar search engine. 
+Current scholar search engine cannot recognize **"jargon"**, that is, specialized termilogy associated with a particular field or area of activity. For example, if you type "ResNet" in Google Scholar and other scholar search engine, you can not find the ResNet paper: "Deep Residual Learning for Image Recognition". In order to make the search more precisely, we build Oh-My-Papers, a hybrid context-aware citation recommendation system, as well as a scholar search engine.
 
 We first point out that we can learn jargons from academic paper citation information. Since specialists usually use jargons such as "ResNet" in the academic paper writings, and the reference to the corresponding paper usually follows the jargon as illustrated below, citation information (especially citation context) of academic papers can help us to improve the searching results.
 
@@ -12,7 +12,9 @@ We first point out that we can learn jargons from academic paper citation inform
 
 In this work, we also create a large dataset recording citation information from papers of computer vision field in recent years. The dataset is ~10x larger than the biggest dataset from the previous works.
 
-We also implement a simple front-end website, which has three functions: context searching, auto-citation and related paper recommendation. See the details from the demo repository [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
+Besides paper recommendation, our search engine can also be regarded as a citation recommendation system. It can also perform auto-citation. We also provide related paper recommendation service based on our VGAE model.
+
+We implement a simple front-end website, which has three functions: context searching, auto-citation and related paper recommendation. See the details from the demo repository [oh-my-papers-website](https://github.com/zhao-hr/oh-my-papers-website) for details.
 
 ## Requirements
 
