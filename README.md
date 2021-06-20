@@ -1,6 +1,8 @@
-![](imgs/oh-my-papers.png)
+![](assets/imgs/oh-my-papers.png)
 
 # Oh-My-Papers: a Hybrid Context-aware Paper Recommendation System
+
+[[Paper](assets/Oh-My-Papers%20a%20Hybrid%20Context-aware%20Paper%20Recommendation%20System.pdf)]
 
 ## Introduction
 
@@ -8,7 +10,7 @@ Current scholar search engine cannot recognize **"jargon"**, that is, specialize
 
 We first point out that we can learn jargons from academic paper citation information. Since specialists usually use jargons such as "ResNet" in the academic paper writings, and the reference to the corresponding paper usually follows the jargon as illustrated below, citation information (especially citation context) of academic papers can help us to improve the searching results.
 
-![](imgs/citation.png)
+![](assets/imgs/citation.png)
 
 In this work, we also create a large dataset recording citation information from papers of computer vision field in recent years. The dataset is ~10x larger than the biggest dataset from the previous works.
 
