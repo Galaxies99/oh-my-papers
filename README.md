@@ -30,11 +30,11 @@ You may need to manually install `pytorch-geometric` from its [official repo](ht
 
 ## Data Preparation
 
-You can download full data at [Baidu Netdisk](https://pan.baidu.com/s/1N4zsWhieluiT3sC0FBASPw) (Extract Code: sc88) and [Google Drive](https://drive.google.com/drive/folders/1VJ2vK2OBEvTg_xaXfu8rSZHA-kl0vRS-?usp=sharing), and you need to put it into `data` folder. We also prepare a tiny dataset, which is a subset of the full dataset. If you want to prepare the data yourself, please see [docs/data_preparation.md](docs/data_preparation.md) for details.
+You can download full data at [Baidu Netdisk](https://pan.baidu.com/s/1N4zsWhieluiT3sC0FBASPw) (Extract Code: sc88) and [Google Drive](https://drive.google.com/drive/folders/1fxGBTk-2--HGsTNJXCnfRhQCuWlhTR8q?usp=sharing), and you need to put it into `data` folder. We also prepare a tiny dataset, which is a subset of the full dataset. If you want to prepare the data yourself, please see [docs/data_preparation.md](docs/data_preparation.md) for details.
 
 ## Pretrained Models
 
-You can download full pretrained models at [Baidu Netdisk](https://pan.baidu.com/s/1Z9aFGNq8q_tH0Zz_XpHHJg) (Extract Code: lsgp) and [Google Drive](https://drive.google.com/drive/folders/15uJQg9p74EJ8BlbBdpRVbYaE7vw2fITZ?usp=sharing). After downloading the `stats.zip`, unzip it and put in under the main folder. Then, you can directly use it for inference and evaluation. Please see [docs/pretrained_models.md](docs/pretrained_models.md) for details.
+You can download full pretrained models at [Baidu Netdisk](https://pan.baidu.com/s/1Z9aFGNq8q_tH0Zz_XpHHJg) (Extract Code: lsgp) and [Google Drive](https://drive.google.com/drive/folders/1znpfVT0wi-uGjOczR9vT8GEkjY6LORHW?usp=sharing). After downloading the `stats.zip`, unzip it and put in under the main folder. Then, you can directly use it for inference and evaluation. Please see [docs/pretrained_models.md](docs/pretrained_models.md) for details.
 
 ## Models
 
