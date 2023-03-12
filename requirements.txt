@@ -2,7 +2,7 @@ torch
 numpy
 pandas
 tqdm
-yaml
+pyyaml
 scipy
 argparse
 transformers

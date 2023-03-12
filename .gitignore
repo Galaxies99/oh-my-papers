@@ -6,6 +6,7 @@ raw_data
 paper_data
 data/
 stats/
+main/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
