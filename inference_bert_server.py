@@ -4,10 +4,23 @@ import yaml
 import torch
 import logging
 import argparse
+import socket
 from utils.logger import ColoredLogger
 from dataset import get_bert_dataset
 from models.models import SimpleBert
+from datetime import datetime as dt
 
+server_address = "/tmp/test-socket"
+
+try:
+    os.unlink(server_address)
+except OSError:
+    if os.path.exists(server_address):
+        raise
+
+sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+sock.bind(server_address)
+sock.listen(1)
 
 logging.setLoggerClass(ColoredLogger)
 logger = logging.getLogger(__name__)
@@ -106,6 +119,7 @@ class BertInferencer(object):
 
 
 if __name__ == '__main__':
+    startParseArguments = dt.now()
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', default = os.path.join('configs', 'bert.yaml'), help = 'Config File', type = str)
     parser.add_argument('--input', default = os.path.join('examples', 'context.json'))
@@ -114,20 +128,47 @@ if __name__ == '__main__':
     CFG_FILE = FLAGS.cfg
     INPUT_FILE = FLAGS.input
     OUTPUT_FILE = FLAGS.output
+    endParseArguments = dt.now()
 
+    startReadFiles = dt.now()
     if os.path.exists(os.path.dirname(OUTPUT_FILE)) == False:
         os.makedirs(os.path.dirname(OUTPUT_FILE))
     
     with open(CFG_FILE, 'r') as cfg_file:
         cfgs = yaml.load(cfg_file, Loader = yaml.FullLoader)
+    endReadFiles = dt.now()
 
+    startInitBert = dt.now()
     inferencer = BertInferencer(**cfgs)
-    
-    with open(INPUT_FILE, 'r') as f:
-        input_dict = json.load(f)
+    endInitBert = dt.now()
 
-    output_dict = inferencer.inference(input_dict)
+    print(f"Time to parse args: {endParseArguments-startParseArguments}")
+    print(f"Time to read files: {endReadFiles-startReadFiles}")
+    print(f"Time to init model: {endInitBert-startInitBert}")
 
-    with open(OUTPUT_FILE, 'w') as f:
-        json.dump(output_dict, f)
+
+    while True:
+        # Wait for a connection
+        print("Waiting for a connection")
+        connection, client_address = sock.accept()
+        try:
+            # Receive the data in small chunks and retransmit it
+            while True:
+                data = connection.recv(1024)
+                print("recieved: %s" % data)
+                if data:
+                    # removing the '__STREAM__END__' from the end
+                    payload = data[:-15].decode('UTF-8')
+                    payload_json = json.loads(payload)
+                    result = inferencer.inference(payload_json)
+                    print("sending to client %s" % result)
+                    connection.sendall((json.dumps(result) + "__STREAM__END__").encode())
+                else:
+                    print("No more data")
+                    break
+                
+        finally:
+            # Clean up the connection
+            print("Closing connection")
+            connection.close()
     
