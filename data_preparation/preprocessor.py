@@ -10,6 +10,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--cfg', default = os.path.join('configs', 'data_preparation.yaml'), help = 'Config File', type = str)
 FLAGS = parser.parse_args()
 CFG_FILE = FLAGS.cfg
+count = 0
 
 with open(CFG_FILE, 'r') as cfg_file:
     cfg_dict = yaml.load(cfg_file, Loader=yaml.FullLoader)
@@ -33,6 +34,7 @@ data_name = cfg_dict['data_name']
 
 def conf_to_venue_year_simple(conf_name):
     venue = conf_name[:4]
+    print(conf_name, conf_name[4:])
     year = int(conf_name[4:]) + 2000
     return venue, year
 
@@ -91,13 +93,22 @@ def unique_paper_identifier(paper_name, venue, year):
 def format_citations(pre_citation_list, pre_pd_citation_list, abstract_dict):
     citation_list = []
     pd_citation_list = []
+    print(len(pre_citation_list), len(pre_pd_citation_list))
     for i, c in enumerate(pre_citation_list):
         ref_id = c['ref_id']
+        print(f"ref_id: {ref_id}")
         if ref_id in abstract_dict.keys():
             citation_dict = pre_citation_list[i]
             citation_info = pre_pd_citation_list[i]
             citation_dict['ref_abstract'] = abstract_dict[ref_id]
             citation_info[-1] = abstract_dict[ref_id]
+            citation_list.append(citation_dict)
+            pd_citation_list.append(citation_info)
+        else:
+            citation_dict = pre_citation_list[i]
+            citation_info = pre_pd_citation_list[i]
+            citation_dict['ref_abstract'] = "unknown"
+            citation_info[-1] = "unknown"
             citation_list.append(citation_dict)
             pd_citation_list.append(citation_info)
     return citation_list, pd_citation_list
@@ -109,6 +120,7 @@ def format_str(s):
 
 
 def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
+    global count
     if os.path.exists(input_dir) == False:
         raise AttributeError('Invalid input directory!')
     
@@ -130,20 +142,24 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
         for paper in tqdm(papers):
             _, ext = os.path.splitext(paper)
             if ext != '.json':
+                print('Invalid file format for paper {}'.format(paper))
                 continue
             with open(os.path.join(conf_folder, paper), 'r') as f:
                 paper_dict = json.load(f)
             meta_data = paper_dict.get('metadata', {})
             if meta_data == {}:
+                print('No metadata for paper {}'.format(paper))
                 continue
             
             # Source paper data: paper_name, author_name, venue, year, abstract
             paper_name = meta_data.get('title', '')
             author_name = author_list_to_name(meta_data.get('authors', []))
-            venue, year = conf_to_venue_year_simple(conf)
+            # venue, year = conf_to_venue_year_simple(conf)
+            venue, year = "unknown", "0"
             abstract = meta_data.get('abstractText', '')
             if paper_name is None or abstract is None:
-                continue
+                paper_name = "unknown"
+                abstract = "unknown"
             paper_name = paper_name.encode('utf-8', 'replace').decode('utf-8')
             abstract = abstract.encode('utf-8', 'replace').decode('utf-8')
             paper_name = format_str(paper_name)
@@ -152,7 +168,9 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
             year = int(year)
             abstract = format_str(abstract)
             if paper_name == '' or author_name == '' or abstract == '':
-                continue
+                paper_name = "unknown"
+                abstract = "unknown"
+                author_name = "unknown"
             src_paper_id = unique_paper_identifier(paper_name, venue, year)
             src_ID = paper_identifier_ID.get(src_paper_id, paper_ID_cnt)
             src_ID = int(src_ID)
@@ -171,10 +189,12 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
                 start_offset = ref_info.get('startOffset', -1)
                 end_offset = ref_info.get('endOffset', -1)
                 if context is None or ref_id is None or start_offset is None or end_offset is None:
+                    print("FAIL 1!")
                     continue
                 context = context.encode('utf-8', 'replace').decode('utf-8')
                 context = format_str(context)
                 if ref_id == -1 or context == '' or start_offset == -1 or end_offset == -1:
+                    print("FAIL2!")
                     continue
                 left_context = context[:start_offset]
                 right_context = context[end_offset:]
@@ -184,6 +204,7 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
                 if right_context == "":
                     right_context = " "
                 if ref_id >= len(references):
+                    print("FAIL3!")
                     continue
                 ref_paper = references[ref_id]
                 ref_paper_name = ref_paper.get('title', '')
@@ -191,13 +212,21 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
                 ref_venue = format_venue(ref_paper.get('venue', ''))
                 ref_year = ref_paper.get('year', -1)
                 if ref_paper_name is None or ref_venue is None or ref_year is None:
+                    print("FAIL4!")
                     continue
                 ref_paper_name = ref_paper_name.encode('utf-8', 'replace').decode('utf-8')
                 ref_paper_name = format_str(ref_paper_name)
                 ref_author_name = format_str(ref_author_name)
                 ref_venue = format_str(ref_venue)
+                if ref_venue == "":
+                    ref_venue = "unknown"
+                if ref_author_name == "":
+                    ref_author_name = "unknown"
+                if ref_year == "":
+                    ref_year = "0"
                 ref_year = int(ref_year)
                 if ref_paper_name == '' or ref_author_name == '' or ref_venue == '' or ref_year == -1:
+                    print("FAIL5!", ref_paper_name, ref_author_name, ref_venue, ref_year)
                     continue
                 ref_paper_id = unique_paper_identifier(ref_paper_name, ref_venue, ref_year)
                 ref_ID = paper_identifier_ID.get(ref_paper_id, paper_ID_cnt)
@@ -223,6 +252,8 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
                     'ref_abstract': ''
                 }
 
+                count += 1
+                print(f"appending {count}")
                 citation_list.append(citation_dict)
                 pd_citation_list.append([
                     src_ID, paper_name, author_name, venue, year, abstract, left_context, right_context, 
@@ -230,6 +261,8 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
                 ])
     
     citation_list, pd_citation_list = format_citations(citation_list, pd_citation_list, abstract_dict)
+    # print(len(pd_citation_list), pd_citation_list)
+    # print(len(citation_list), citation_list)
 
     full_citation_dict = {
         'citations': citation_list,
@@ -245,6 +278,7 @@ def process_raw_citation(input_dir, conf_list, output_dir, dataset_name):
         'right_context', 'ref_id', 'ref_title', 'ref_author', 'ref_venue', 'ref_year', 'ref_abstract'
     ]
     df = pd.DataFrame(pd_citation_list, columns = column_name)
+    print(df, df.shape)
     df.index.name = 'index'
     df.to_csv(os.path.join(output_dir, dataset_name + '.csv'))
     print('*** Summary Statistics ***')
